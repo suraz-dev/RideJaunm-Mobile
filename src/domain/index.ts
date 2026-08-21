@@ -6,3 +6,4 @@ export * from './offline';
 export * from './outbox';
 export * from './safety';
 export * from './map';
+export * from './mapOverlay';

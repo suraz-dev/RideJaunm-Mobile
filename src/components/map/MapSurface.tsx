@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * TACTICAL GEOSPATIAL MAP SURFACE COMPONENT (R7)
+ * TACTICAL GEOSPATIAL MAP SURFACE COMPONENT (R7 / R8)
  * ============================================================================
  *
  * WHY THIS EXISTS:
@@ -8,7 +8,7 @@
  * camera telemetry, coverage boundaries, and provenance disclosures.
  *
  * It is completely decoupled from native map SDKs and accepts only typed
- * `MapRenderInput` view models.
+ * `MapRenderInput` view models and optional overlay children (routes, markers, controls).
  *
  * DESIGN TOKEN & SAFETY INVARIANTS:
  * 1. ZERO raw hex or unexplained RGBA values: all styling is derived from
@@ -21,7 +21,7 @@
  *    borders and backdrops instead of washed-out translucent glass.
  */
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { View, StyleSheet, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
 import Svg, { Rect, Path, Defs, Pattern, Line, Circle } from 'react-native-svg';
 import { MapRenderInput } from '../../domain/map';
@@ -35,9 +35,10 @@ export interface MapSurfaceProps {
   input: MapRenderInput;
   onRetry?: () => void;
   style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 }
 
-export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style }) => {
+export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style, children }) => {
   const { mode, colors } = useTheme();
   const { camera, baseState, networkPolicy, coverage, provenance } = input;
 
@@ -123,7 +124,10 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </Svg>
       </View>
 
-      {/* 2. Partial Missing-Coverage Wireframe / Hatched Region */}
+      {/* 2. Embedded Overlay Children (Route Polylines, Markers) */}
+      {baseState !== 'error' && baseState !== 'unavailable' && children}
+
+      {/* 3. Partial Missing-Coverage Wireframe / Hatched Region */}
       {baseState === 'partial' && (
         <View style={styles.partialOverlayContainer}>
           <Svg height="100%" width="100%">
@@ -150,7 +154,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 3. Stale Cache Disclosure Banner */}
+      {/* 4. Stale Cache Disclosure Banner */}
       {baseState === 'stale' && (
         <View style={[styles.staleNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: primitive.color.semantic.warning }]}>
           <View style={styles.staleHeaderRow}>
@@ -165,7 +169,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 4. Loading State Spinner & Overlay */}
+      {/* 5. Loading State Spinner & Overlay */}
       {baseState === 'loading' && (
         <View style={[styles.fallbackCenterCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <ActivityIndicator size="small" color={colors.interactive} />
@@ -178,7 +182,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 5. Unavailable / Error State Fallback Panel */}
+      {/* 6. Unavailable / Error State Fallback Panel */}
       {(baseState === 'unavailable' || baseState === 'error') && (
         <View
           style={[
@@ -217,7 +221,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 6. Top Telemetry Pill (Coordinates & Zoom) */}
+      {/* 7. Top Telemetry Pill (Coordinates & Zoom) */}
       <View
         style={[
           styles.topTelemetryPill,
@@ -235,7 +239,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </Text>
       </View>
 
-      {/* 7. Mandatory OpenStreetMap Attribution (Always Visible Bottom-Left) */}
+      {/* 8. Mandatory OpenStreetMap Attribution (Always Visible Bottom-Left) */}
       <View
         style={[
           styles.attributionTag,
