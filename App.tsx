@@ -21,11 +21,12 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 import { ActivityIndicator, View } from 'react-native';
 import { ThemeProvider, useTheme } from './src/design/ThemeProvider';
+import { AppStateProvider } from './src/state/AppStateContext';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { primitive } from './src/design/tokens';
 
 function AppContent() {
-  const { mode, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   return (
     <SafeAreaProvider>
@@ -66,7 +67,9 @@ export default function App() {
 
   return (
     <ThemeProvider initialMode="night">
-      <AppContent />
+      <AppStateProvider>
+        <AppContent />
+      </AppStateProvider>
     </ThemeProvider>
   );
 }

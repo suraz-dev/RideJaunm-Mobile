@@ -4,11 +4,13 @@ import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
 import { useTheme } from '../design/ThemeProvider';
+import { useAppState } from '../state/AppStateContext';
 import { ThemeMode, primitive } from '../design/tokens';
 import * as Haptics from 'expo-haptics';
 
 export const ProfileGarageScreen: React.FC = () => {
   const { mode, setMode, colors } = useTheme();
+  const { offlineRegions, pendingOperationsCount, resetAccountData } = useAppState();
 
   const themesList: { key: ThemeMode; label: string; desc: string }[] = [
     { key: 'night', label: 'Night (रात्री)', desc: 'Tactical dark base (Default)' },
@@ -20,6 +22,20 @@ export const ProfileGarageScreen: React.FC = () => {
   const handleThemeChange = (newMode: ThemeMode) => {
     Haptics.selectionAsync();
     setMode(newMode);
+  };
+
+  const getLifecycleBadge = (lifecycle: string) => {
+    switch (lifecycle) {
+      case 'complete':
+        return <Badge label="DOWNLOADED" variant="volt" size="sm" />;
+      case 'downloading':
+        return <Badge label="45% DOWNLOADING" variant="cyan" size="sm" />;
+      case 'queued':
+        return <Badge label="QUEUED" variant="neutral" size="sm" />;
+      case 'storage_full':
+      default:
+        return <Badge label="STORAGE FULL" variant="danger" size="sm" />;
+    }
   };
 
   return (
@@ -53,32 +69,37 @@ export const ProfileGarageScreen: React.FC = () => {
             <Text variant="h3" style={{ color: primitive.color.cyan[400] }}>4,820 km</Text>
           </View>
           <View style={styles.statBox}>
-            <Text variant="bodySmall" muted>HIGHEST PASS</Text>
-            <Text variant="h3" style={{ color: primitive.color.volt[400] }}>5,416 m</Text>
+            <Text variant="bodySmall" muted>OUTBOX QUEUE</Text>
+            <Text variant="h3" style={{ color: pendingOperationsCount > 0 ? primitive.color.semantic.warning : primitive.color.volt[400] }}>
+              {pendingOperationsCount}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Offline Region Cache Manager */}
       <Text variant="h3" style={styles.sectionHeader}>
-        Nepal Offline Map Packs
+        Nepal Offline Map Packs ({offlineRegions.length})
       </Text>
       <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-        <View style={styles.regionRow}>
-          <View>
-            <Text variant="bodyMedium" style={{ fontWeight: '700' }}>Bagmati & Narayani Zone</Text>
-            <Text variant="mono" style={{ color: colors.textSubtle }}>142 MB · Full 3D Elevation</Text>
-          </View>
-          <Badge label="DOWNLOADED" variant="volt" size="sm" />
-        </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <View style={styles.regionRow}>
-          <View>
-            <Text variant="bodyMedium" style={{ fontWeight: '700' }}>Annapurna & Mustang Circuit</Text>
-            <Text variant="mono" style={{ color: colors.textSubtle }}>218 MB · Offline Trails & LZs</Text>
-          </View>
-          <Badge label="DOWNLOADED" variant="volt" size="sm" />
-        </View>
+        {offlineRegions.map((region, idx) => (
+          <React.Fragment key={region.id}>
+            <View style={styles.regionRow}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text variant="bodyMedium" style={{ fontWeight: '700' }}>
+                  {region.name}
+                </Text>
+                <Text variant="mono" style={{ color: colors.textSubtle }}>
+                  {Math.round(region.sizeBytes / (1024 * 1024))} MB · {region.includes3dElevation ? '3D Elevation' : '2D Tiles'}
+                </Text>
+              </View>
+              {getLifecycleBadge(region.lifecycle)}
+            </View>
+            {idx < offlineRegions.length - 1 && (
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            )}
+          </React.Fragment>
+        ))}
       </View>
 
       {/* 4 Theme Modes Selector */}
@@ -115,6 +136,13 @@ export const ProfileGarageScreen: React.FC = () => {
           );
         })}
       </View>
+
+      <Button
+        label="RESET LOCAL CACHE & OUTBOX"
+        onPress={resetAccountData}
+        variant="secondary"
+        style={{ marginTop: primitive.spacing[4] }}
+      />
     </ScrollView>
   );
 };
@@ -160,7 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   divider: {
     height: 1,

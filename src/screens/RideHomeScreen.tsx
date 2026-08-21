@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { TelemetryHUD } from '../components/composites/TelemetryHUD';
 import { RouteModeSelector, RouteMode } from '../components/composites/RouteModeSelector';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
 import { useTheme } from '../design/ThemeProvider';
+import { useAppState } from '../state/AppStateContext';
 import { primitive } from '../design/tokens';
 
 export const RideHomeScreen: React.FC = () => {
   const { colors } = useTheme();
-  const [selectedRouteMode, setSelectedRouteMode] = useState<RouteMode>('curvy');
+  const { activeRoute, availableRoutes, setActiveRoute, connectionState } = useAppState();
   const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleSelectMode = (mode: RouteMode) => {
+    const found = availableRoutes.find((r) => r.profile === mode);
+    if (found) setActiveRoute(found);
+  };
+
+  const topHazard = activeRoute.hazards[0];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -19,38 +27,40 @@ export const RideHomeScreen: React.FC = () => {
       <View style={[styles.mapPlaceholder, { backgroundColor: colors.surface }]}>
         <View style={styles.mapGridLines}>
           <Text variant="mono" style={{ color: colors.textSubtle, opacity: 0.6 }}>
-            N 27°42'54.2" · E 85°19'30.1" · 1,400m ASL
+            N 27°42'54.2" · E 85°19'30.1" · {connectionState.gps.altitudeMeters}m ASL
           </Text>
           <Text variant="bodySmall" style={{ color: primitive.color.volt[400], marginTop: 4 }}>
-            📍 Kathmandu Valley ➔ Dhulikhel Ridge
+            📍 {activeRoute.origin.name} ➔ {activeRoute.destination.name}
           </Text>
         </View>
 
         {/* Floating Top In-Ride Warning */}
-        <View style={styles.hazardBanner}>
-          <Badge
-            label="⚠️ Monsoon Warning: Mugling Section (Mud/Gravel)"
-            variant="warning"
-            size="md"
-          />
-        </View>
+        {topHazard && (
+          <View style={styles.hazardBanner}>
+            <Badge
+              label={`⚠️ ${topHazard.locationName}: ${topHazard.description}`}
+              variant="warning"
+              size="md"
+            />
+          </View>
+        )}
       </View>
 
       {/* Bottom Tactical Floating Console */}
       <View style={styles.bottomConsole}>
         <TelemetryHUD
           speedKmh={isNavigating ? 68 : 0}
-          altitudeMeters={1740}
-          bearingDeg={45}
-          gpsStatus="locked"
-          networkStatus="online"
+          altitudeMeters={connectionState.gps.altitudeMeters}
+          bearingDeg={connectionState.gps.headingDeg}
+          gpsStatus={connectionState.gps.lockState === 'locked' ? 'locked' : connectionState.gps.lockState === 'acquiring' ? 'acquiring' : 'lost'}
+          networkStatus={connectionState.mode === 'online' ? 'online' : connectionState.mode === 'meshOnly' ? 'mesh' : 'offline'}
           style={styles.hudOverlay}
         />
 
         <View style={styles.routeSelectorWrapper}>
           <RouteModeSelector
-            selectedMode={selectedRouteMode}
-            onSelectMode={setSelectedRouteMode}
+            selectedMode={activeRoute.profile}
+            onSelectMode={handleSelectMode}
           />
         </View>
 
