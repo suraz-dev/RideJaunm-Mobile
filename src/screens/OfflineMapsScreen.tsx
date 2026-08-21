@@ -8,7 +8,8 @@
  * 2. 4-Tab filter selector (All, Downloading, Stale, Issues) using accessible tab semantics.
  * 3. Inspection of all 8 lifecycle states (queued, downloading, paused, partial, complete, stale, failed, storage_full).
  * 4. Component-local interactive previews (pause/resume, retry, remove confirmation).
- * 5. Embedded MapSurface bounds preview with OpenStreetMap attribution and unconditional cache_only policy.
+ * 5. Embedded MapSurface bounds preview with OpenStreetMap attribution, unconditional cache_only policy,
+ *    and truthful MapBaseState mapping (stale, partial, error, unavailable, fresh).
  * 6. Offline/mesh connection banner awareness.
  * 7. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
  */
@@ -30,7 +31,7 @@ import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
 import { primitive } from '../design/tokens';
 import { OfflineRegion, OfflinePackLifecycle } from '../domain/offline';
-import { MapRenderInput } from '../domain/map';
+import { MapRenderInput, MapBaseState, MapCoverage } from '../domain/map';
 import { MapMarker } from '../domain/mapOverlay';
 import { allOfflineRegionFixtures } from '../fixtures/offlineRegions.fixture';
 
@@ -109,12 +110,97 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
     );
   };
 
-  // Map preview inputs — strictly unconditional cache_only network policy for R12 fixture preview
+  const getLifecycleBadgeVariant = (lifecycle: OfflinePackLifecycle) => {
+    switch (lifecycle) {
+      case 'complete':
+        return 'volt';
+      case 'downloading':
+        return 'cyan';
+      case 'queued':
+        return 'neutral';
+      case 'paused':
+      case 'partial':
+      case 'stale':
+      case 'failed':
+      case 'storage_full':
+      default:
+        return 'warning';
+    }
+  };
+
+  const getLifecycleLabel = (lifecycle: OfflinePackLifecycle, progress?: number) => {
+    switch (lifecycle) {
+      case 'complete':
+        return 'COMPLETE (FIXTURE)';
+      case 'downloading':
+        return `DOWNLOADING PREVIEW (${progress ?? 0}%)`;
+      case 'queued':
+        return 'QUEUED (FIXTURE)';
+      case 'paused':
+        return `PAUSED PREVIEW (${progress ?? 0}%)`;
+      case 'partial':
+        return `PARTIAL PREVIEW (${progress ?? 0}%)`;
+      case 'stale':
+        return 'STALE (FIXTURE UPDATE PREVIEW)';
+      case 'failed':
+        return 'FAILED (SIMULATED)';
+      case 'storage_full':
+        return 'STORAGE FULL (FIXTURE)';
+    }
+  };
+
+  // Truthful mapping from offline pack lifecycle to MapSurface base state and coverage
+  const getMapBaseStateAndCoverage = (
+    lifecycle: OfflinePackLifecycle
+  ): { baseState: MapBaseState; coverage: MapCoverage } => {
+    switch (lifecycle) {
+      case 'complete':
+        return { baseState: 'fresh', coverage: { isCovered: true } };
+      case 'downloading':
+        return {
+          baseState: 'fresh',
+          coverage: { isCovered: false, missingAreaLabel: 'Simulated pack downloading' },
+        };
+      case 'queued':
+        return {
+          baseState: 'unavailable',
+          coverage: { isCovered: false, missingAreaLabel: 'Simulated pack queued' },
+        };
+      case 'paused':
+        return {
+          baseState: 'partial',
+          coverage: { isCovered: false, missingAreaLabel: 'Simulated download paused' },
+        };
+      case 'partial':
+        return {
+          baseState: 'partial',
+          coverage: { isCovered: false, missingAreaLabel: 'Missing passes unavailable' },
+        };
+      case 'stale':
+        return {
+          baseState: 'stale',
+          coverage: { isCovered: true, missingAreaLabel: 'Expired local cache' },
+        };
+      case 'failed':
+        return {
+          baseState: 'error',
+          coverage: { isCovered: false, missingAreaLabel: 'Simulated transfer fault' },
+        };
+      case 'storage_full':
+        return {
+          baseState: 'unavailable',
+          coverage: { isCovered: false, missingAreaLabel: 'Simulated storage pressure' },
+        };
+    }
+  };
+
+  // Map preview inputs — strictly unconditional cache_only network policy and truthful baseState
   const mapRenderInput: MapRenderInput = useMemo(() => {
     const centerLat =
       (selectedRegion.bounds.minLat + selectedRegion.bounds.maxLat) / 2;
     const centerLng =
       (selectedRegion.bounds.minLng + selectedRegion.bounds.maxLng) / 2;
+    const { baseState, coverage } = getMapBaseStateAndCoverage(selectedRegion.lifecycle);
 
     return {
       camera: {
@@ -124,8 +210,8 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
         pitchDegrees: 0,
       },
       networkPolicy: 'cache_only',
-      baseState: selectedRegion.lifecycle === 'partial' ? 'partial' : 'fresh',
-      coverage: { isCovered: selectedRegion.lifecycle === 'complete' },
+      baseState,
+      coverage,
       provenance: {
         source: 'OpenStreetMap Vector Contours (Offline Region Fixture)',
         sourceVersion: 'OSM-NP-2026.08.15',
@@ -228,7 +314,11 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
             <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
               REGION BOUNDS PREVIEW ({selectedRegion.name})
             </Text>
-            <Badge label={selectedRegion.lifecycle.toUpperCase()} variant="volt" size="sm" />
+            <Badge
+              label={getLifecycleLabel(selectedRegion.lifecycle, selectedRegion.progressPercentage)}
+              variant={getLifecycleBadgeVariant(selectedRegion.lifecycle)}
+              size="sm"
+            />
           </View>
           <View style={[styles.mapContainer, { borderColor: colors.border }]}>
             <MapSurface input={mapRenderInput} style={{ flex: 1 }}>

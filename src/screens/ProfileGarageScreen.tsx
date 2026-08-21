@@ -26,17 +26,44 @@ export const ProfileGarageScreen: React.FC = () => {
     setMode(newMode);
   };
 
-  const getLifecycleBadge = (lifecycle: string) => {
+  const getLifecycleBadge = (lifecycle: string, progressPercentage?: number) => {
     switch (lifecycle) {
       case 'complete':
         return <Badge label="COMPLETE (FIXTURE)" variant="volt" size="sm" />;
       case 'downloading':
-        return <Badge label="DOWNLOADING PREVIEW (45%)" variant="cyan" size="sm" />;
+        return (
+          <Badge
+            label={`DOWNLOADING PREVIEW (${progressPercentage ?? 45}%)`}
+            variant="cyan"
+            size="sm"
+          />
+        );
       case 'queued':
         return <Badge label="QUEUED (FIXTURE)" variant="neutral" size="sm" />;
+      case 'paused':
+        return (
+          <Badge
+            label={`PAUSED PREVIEW (${progressPercentage ?? 60}%)`}
+            variant="warning"
+            size="sm"
+          />
+        );
+      case 'partial':
+        return (
+          <Badge
+            label={`PARTIAL PREVIEW (${progressPercentage ?? 70}%)`}
+            variant="warning"
+            size="sm"
+          />
+        );
+      case 'stale':
+        return <Badge label="STALE (FIXTURE UPDATE PREVIEW)" variant="warning" size="sm" />;
+      case 'failed':
+        return <Badge label="FAILED (SIMULATED)" variant="warning" size="sm" />;
       case 'storage_full':
-      default:
         return <Badge label="STORAGE FULL (FIXTURE)" variant="warning" size="sm" />;
+      default:
+        return <Badge label="FIXTURE PREVIEW" variant="neutral" size="sm" />;
     }
   };
 
@@ -113,7 +140,7 @@ export const ProfileGarageScreen: React.FC = () => {
                   {Math.round(region.sizeBytes / (1024 * 1024))} MB · {region.includes3dElevation ? '3D Elevation' : '2D Tiles'}
                 </Text>
               </View>
-              {getLifecycleBadge(region.lifecycle)}
+              {getLifecycleBadge(region.lifecycle, region.progressPercentage)}
             </View>
             {idx < offlineRegions.length - 1 && (
               <View style={[styles.divider, { backgroundColor: colors.border }]} />

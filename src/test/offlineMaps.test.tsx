@@ -9,6 +9,7 @@ import { ConnectionStateSnapshot } from '../domain/connectivity';
 import { connectionDeadZoneSnapshot, connectionOnlineSnapshot } from '../fixtures/connectivity.fixture';
 import { allOfflineRegionFixtures } from '../fixtures/offlineRegions.fixture';
 import { ThemeMode } from '../design/tokens';
+import { OfflineRegion } from '../domain/offline';
 
 describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
   let memoryStore: MemoryLocalStore;
@@ -17,9 +18,17 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     memoryStore = new MemoryLocalStore();
   });
 
-  const createWrapper = (initialConn?: ConnectionStateSnapshot, theme: ThemeMode = 'night') => {
+  const createWrapper = (
+    initialConn?: ConnectionStateSnapshot,
+    theme: ThemeMode = 'night',
+    customRegions?: OfflineRegion[]
+  ) => {
     return ({ children }: { children: React.ReactNode }) => (
-      <AppStateProvider store={memoryStore} initialConnectionState={initialConn}>
+      <AppStateProvider
+        store={memoryStore}
+        initialConnectionState={initialConn}
+        initialOfflineRegions={customRegions}
+      >
         <ThemeProvider initialMode={theme}>{children}</ThemeProvider>
       </AppStateProvider>
     );
@@ -175,7 +184,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     expect(view.getByText(/Removal preview only — no region was deleted/)).toBeTruthy();
   });
 
-  test('forces MapSurface preview to unconditional cache_only network policy and displays fixture details', async () => {
+  test('qualifies lifecycle state in map preview and enforces cache_only policy with truthful MapBaseState', async () => {
     // Render under online snapshot to verify it STILL forces cache_only policy
     const view = await render(<OfflineMapsScreen />, {
       wrapper: createWrapper(connectionOnlineSnapshot),
@@ -188,7 +197,9 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       fireEvent.press(showMapBtn);
     });
 
+    // Check bounds header has qualified badge (COMPLETE (FIXTURE))
     expect(view.getByText('REGION BOUNDS PREVIEW (Annapurna & Mustang Circuit)')).toBeTruthy();
+    expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
 
     // Expand details and check fixture qualification
     const detailsBtn = view.getByLabelText('Show Annapurna & Mustang Circuit fixture details');
@@ -197,16 +208,32 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     });
     expect(view.getByText(/Checksum: 9a8f2c3d4e5f60718293a4b5/)).toBeTruthy();
     expect(view.getByText(/Fixture timestamp: 2026-08-10T04:00:00Z · Fixture expiry: 2026-11-10T04:00:00Z/)).toBeTruthy();
+
+    // Select a stale region and check that map bounds preview header updates with qualified badge
+    const staleRegion = allOfflineRegionFixtures.find((r) => r.lifecycle === 'stale')!;
+    const staleMapBtn = view.getByLabelText(`Show ${staleRegion.name} bounds in map preview`);
+    await act(async () => {
+      fireEvent.press(staleMapBtn);
+    });
+    expect(view.getByText(`REGION BOUNDS PREVIEW (${staleRegion.name})`)).toBeTruthy();
+    expect(view.getAllByText('STALE (FIXTURE UPDATE PREVIEW)').length).toBeGreaterThan(0);
   });
 
-  test('renders ProfileGarageScreen with explicit fixture labels for offline map packs', async () => {
-    const view = await render(<ProfileGarageScreen />, { wrapper: createWrapper() });
+  test('preserves and accurately renders all 8 lifecycle states in ProfileGarageScreen summary', async () => {
+    // Supply all 8 regions to ProfileGarageScreen to verify no state is collapsed to false status
+    const view = await render(<ProfileGarageScreen />, {
+      wrapper: createWrapper(undefined, 'night', allOfflineRegionFixtures),
+    });
 
     expect(view.getByText(/Nepal Offline Map Packs — Fixture Preview/)).toBeTruthy();
     expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
     expect(view.getByText('DOWNLOADING PREVIEW (45%)')).toBeTruthy();
     expect(view.getByText('QUEUED (FIXTURE)')).toBeTruthy();
-    expect(view.getAllByText('STORAGE FULL (FIXTURE)').length).toBeGreaterThan(0);
+    expect(view.getByText('PAUSED PREVIEW (60%)')).toBeTruthy();
+    expect(view.getByText('PARTIAL PREVIEW (70%)')).toBeTruthy();
+    expect(view.getByText('STALE (FIXTURE UPDATE PREVIEW)')).toBeTruthy();
+    expect(view.getByText('FAILED (SIMULATED)')).toBeTruthy();
+    expect(view.getByText('STORAGE FULL (FIXTURE)')).toBeTruthy();
   });
 
   test('renders offline/mesh banner when in deadZone connection mode', async () => {
