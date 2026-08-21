@@ -29,14 +29,14 @@ export const ProfileGarageScreen: React.FC = () => {
   const getLifecycleBadge = (lifecycle: string) => {
     switch (lifecycle) {
       case 'complete':
-        return <Badge label="DOWNLOADED" variant="volt" size="sm" />;
+        return <Badge label="COMPLETE (FIXTURE)" variant="volt" size="sm" />;
       case 'downloading':
-        return <Badge label="45% DOWNLOADING" variant="cyan" size="sm" />;
+        return <Badge label="DOWNLOADING PREVIEW (45%)" variant="cyan" size="sm" />;
       case 'queued':
-        return <Badge label="QUEUED" variant="neutral" size="sm" />;
+        return <Badge label="QUEUED (FIXTURE)" variant="neutral" size="sm" />;
       case 'storage_full':
       default:
-        return <Badge label="STORAGE FULL" variant="warning" size="sm" />;
+        return <Badge label="STORAGE FULL (FIXTURE)" variant="warning" size="sm" />;
     }
   };
 
@@ -83,10 +83,10 @@ export const ProfileGarageScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Offline Region Cache Manager */}
+      {/* Offline Region Cache Manager (Fixture Preview) */}
       <View style={styles.sectionHeaderRow}>
         <Text variant="h3" style={styles.sectionHeader}>
-          Nepal Offline Map Packs ({offlineRegions.length})
+          Nepal Offline Map Packs — Fixture Preview ({offlineRegions.length})
         </Text>
         <TouchableOpacity
           style={styles.manageBtn}

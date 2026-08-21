@@ -12,7 +12,7 @@
  * 1. Zero real file-system operations or download transfers.
  * 2. Minimum 48 dp touch targets on all action buttons.
  * 3. Never uses SOS Red (#FF1F3D) for storage, failure, or warning states.
- * 4. Permanent no-download / no-delete truth disclosures.
+ * 4. Every lifecycle label and detail is explicitly qualified as simulated/fixture.
  * 5. Zero raw hex/RGBA; uses semantic theme tokens.
  */
 
@@ -71,19 +71,19 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
       case 'complete':
         return 'COMPLETE (FIXTURE)';
       case 'downloading':
-        return `DOWNLOADING (${region.progressPercentage}%)`;
+        return `DOWNLOADING PREVIEW (${region.progressPercentage}%)`;
       case 'queued':
-        return 'QUEUED';
+        return 'QUEUED (FIXTURE)';
       case 'paused':
-        return `PAUSED (${region.progressPercentage}%)`;
+        return `PAUSED PREVIEW (${region.progressPercentage}%)`;
       case 'partial':
-        return `PARTIAL (${region.progressPercentage}%)`;
+        return `PARTIAL PREVIEW (${region.progressPercentage}%)`;
       case 'stale':
-        return 'STALE (UPDATE AVAILABLE)';
+        return 'STALE (FIXTURE UPDATE PREVIEW)';
       case 'failed':
         return 'FAILED (SIMULATED)';
       case 'storage_full':
-        return 'STORAGE FULL';
+        return 'STORAGE FULL (FIXTURE)';
     }
   };
 
@@ -227,7 +227,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
           ]}
         >
           <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-            ⚠️ Stale Fixture Pack (Update Available)
+            ⚠️ Stale Fixture State — Future Update Preview
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
             Pre-authored 90-day expiry reached. Monsoon road alignment updates available in future releases.
@@ -264,7 +264,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             Bounds: [{region.bounds.minLat.toFixed(2)}, {region.bounds.minLng.toFixed(2)}] to [{region.bounds.maxLat.toFixed(2)}, {region.bounds.maxLng.toFixed(2)}]
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Last Verified: {region.lastUpdatedUtc} · Expires: {region.expiryUtc}
+            Fixture timestamp: {region.lastUpdatedUtc} · Fixture expiry: {region.expiryUtc}
           </Text>
         </View>
       )}

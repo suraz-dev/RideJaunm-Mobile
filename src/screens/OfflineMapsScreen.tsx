@@ -8,7 +8,7 @@
  * 2. 4-Tab filter selector (All, Downloading, Stale, Issues) using accessible tab semantics.
  * 3. Inspection of all 8 lifecycle states (queued, downloading, paused, partial, complete, stale, failed, storage_full).
  * 4. Component-local interactive previews (pause/resume, retry, remove confirmation).
- * 5. Embedded MapSurface bounds preview with OpenStreetMap attribution.
+ * 5. Embedded MapSurface bounds preview with OpenStreetMap attribution and unconditional cache_only policy.
  * 6. Offline/mesh connection banner awareness.
  * 7. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
  */
@@ -109,7 +109,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
     );
   };
 
-  // Map preview inputs
+  // Map preview inputs — strictly unconditional cache_only network policy for R12 fixture preview
   const mapRenderInput: MapRenderInput = useMemo(() => {
     const centerLat =
       (selectedRegion.bounds.minLat + selectedRegion.bounds.maxLat) / 2;
@@ -123,7 +123,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
         bearingDegrees: 0,
         pitchDegrees: 0,
       },
-      networkPolicy: isOffline ? 'cache_only' : 'online',
+      networkPolicy: 'cache_only',
       baseState: selectedRegion.lifecycle === 'partial' ? 'partial' : 'fresh',
       coverage: { isCovered: selectedRegion.lifecycle === 'complete' },
       provenance: {
@@ -133,7 +133,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
         attribution: '© OpenStreetMap contributors',
       },
     };
-  }, [selectedRegion, isOffline]);
+  }, [selectedRegion]);
 
   const previewMarkers: MapMarker[] = useMemo(() => {
     return [
