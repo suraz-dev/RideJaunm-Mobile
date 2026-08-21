@@ -9,3 +9,4 @@ export * from './routeOverlays.fixture';
 export * from './telemetryPresentation.fixture';
 export * from './tripPlanner.fixture';
 export * from './tripReadiness.fixture';
+export * from './squadCommunity.fixture';

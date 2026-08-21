@@ -10,3 +10,4 @@ export * from './mapOverlay';
 export * from './telemetryPresentation';
 export * from './tripPlanner';
 export * from './tripReadiness';
+export * from './squadCommunity';
