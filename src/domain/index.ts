@@ -5,3 +5,4 @@ export * from './connectivity';
 export * from './offline';
 export * from './outbox';
 export * from './safety';
+export * from './map';
