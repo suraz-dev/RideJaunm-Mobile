@@ -1,12 +1,12 @@
 /**
  * ============================================================================
- * TRIP PLANNER & ROUTE COMPARISON SCREEN (R10)
+ * TRIP PLANNER & ROUTE COMPARISON SCREEN (R10 & R11)
  * ============================================================================
  *
  * Coordinates:
  * 1. Editable Origin & Destination search against synthetic Nepal fixture catalog.
  * 2. Visible PlannerSearchState (idle, searching_fixture, results, no_results, offline_cached).
- * 3. Solo vs Group planning intent (with read-only R11 squad handoff).
+ * 3. Solo vs Group planning intent (with interactive R11 squad readiness handoff).
  * 4. 3-Way Route Candidate comparison (Straight, Curvy, Supercurvy).
  * 5. Explicit handling of Terai/Flat and Upper Mustang permit restrictions.
  * 6. Intermediate waypoint editor (add, remove with confirmation, reorder).
@@ -30,6 +30,7 @@ import { WaypointEditor } from '../components/planner/WaypointEditor';
 import { MapSurface } from '../components/map/MapSurface';
 import { RouteLayer } from '../components/map/RouteLayer';
 import { MarkerLayer } from '../components/map/MarkerLayer';
+import { TripReadinessScreen } from './TripReadinessScreen';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
 import { primitive } from '../design/tokens';
@@ -66,8 +67,9 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
   const { connectionState } = useAppState();
   const isDayGlare = mode === 'dayGlare';
 
-  // Planning intent: Solo vs Group (R10: read-only handoff)
+  // Planning intent: Solo vs Group (R11 squad handoff)
   const [planningMode, setPlanningMode] = useState<PlanningMode>('solo');
+  const [showReadinessScreen, setShowReadinessScreen] = useState(false);
 
   // Editable Origin & Destination State
   const [originPlace, setOriginPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[0]); // Kathmandu
@@ -129,7 +131,7 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
     );
   }, [searchQuery, isOffline]);
 
-  // [P1] Explicit PlannerSearchState derivation
+  // Explicit PlannerSearchState derivation
   const searchState: PlannerSearchState = useMemo(() => {
     if (searchTarget === null) return 'idle';
     if (isOffline) return 'offline_cached';
@@ -258,6 +260,11 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
     return list;
   }, [originPlace, destinationPlace, waypoints]);
 
+  // If readiness screen is active, render it
+  if (showReadinessScreen) {
+    return <TripReadinessScreen onBackToPlanner={() => setShowReadinessScreen(false)} />;
+  }
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -328,7 +335,7 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Group Mode Read-Only R11 Handoff Card */}
+      {/* Group Mode R11 Readiness Handoff Card */}
       {planningMode === 'group_fixture' && (
         <View
           style={[
@@ -339,16 +346,23 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
             },
           ]}
         >
-          <Badge label="TASK R11 HANDOFF PREVIEW" variant="supercurvy" size="sm" />
+          <Badge label="TASK R11 SQUAD READINESS" variant="supercurvy" size="sm" />
           <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700', marginTop: primitive.spacing[2] }}>
-            Himalayan Ridge Riders Squad (3 Members)
+            Himalayan Ridge Riders Squad (4 Members)
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: 2 }}>
-            Lead: Bikash · Sweep: Rabin · Follower: Suraj
+            Lead: Bikash · Sweep: Rabin · Riders: Suraj, Anish
           </Text>
           <Text variant="bodySmall" muted style={{ marginTop: primitive.spacing[2] }}>
-            Group roster, member invites, and live rally coordination will be activated in Task R11.
+            Inspect squad roster, assign local planning roles, and verify multi-factor pre-ride trip readiness.
           </Text>
+
+          <Button
+            label="OPEN SQUAD READINESS PREVIEW (तयारी पूर्वावलोकन)"
+            onPress={() => setShowReadinessScreen(true)}
+            variant="secondary"
+            style={{ marginTop: primitive.spacing[3], minHeight: 48 }}
+          />
         </View>
       )}
 
@@ -405,7 +419,7 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
                 accessibilityLabel="Search Nepal origin places fixture catalog"
               />
 
-              {/* [P1] Visible Offline Catalogue State */}
+              {/* Visible Offline Catalogue State */}
               {searchState === 'offline_cached' && (
                 <View
                   style={[
@@ -519,7 +533,7 @@ export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
                 accessibilityLabel="Search Nepal places fixture catalog"
               />
 
-              {/* [P1] Visible Offline Catalogue State */}
+              {/* Visible Offline Catalogue State */}
               {searchState === 'offline_cached' && (
                 <View
                   style={[

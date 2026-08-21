@@ -63,7 +63,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     expect(view.getAllByText(/Biratnagar/).length).toBeGreaterThanOrEqual(1);
   });
 
-  test('switches between Solo and Squad planning intent with R11 handoff notice', async () => {
+  test('switches between Solo and Squad planning intent with R11 readiness handoff notice', async () => {
     const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const squadTab = view.getByText(/Squad Ride/);
@@ -71,17 +71,17 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.press(squadTab);
     });
 
-    expect(view.getByText('TASK R11 HANDOFF PREVIEW')).toBeTruthy();
+    expect(view.getByText('TASK R11 SQUAD READINESS')).toBeTruthy();
     expect(view.getByText(/Himalayan Ridge Riders Squad/)).toBeTruthy();
     expect(
-      view.getByText(/Group roster, member invites, and live rally coordination will be activated in Task R11./)
+      view.getByText(/Inspect squad roster, assign local planning roles, and verify multi-factor pre-ride trip readiness\./)
     ).toBeTruthy();
 
     const soloTab = view.getByText(/Solo Ride/);
     await act(async () => {
       fireEvent.press(soloTab);
     });
-    expect(view.queryByText('TASK R11 HANDOFF PREVIEW')).toBeNull();
+    expect(view.queryByText('TASK R11 SQUAD READINESS')).toBeNull();
   });
 
   test('searches local Nepal places catalogue, selects Janakpur (Terai corridor), and preserves Curvy as default', async () => {

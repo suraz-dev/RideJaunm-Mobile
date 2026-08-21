@@ -9,3 +9,4 @@ export * from './map';
 export * from './mapOverlay';
 export * from './telemetryPresentation';
 export * from './tripPlanner';
+export * from './tripReadiness';
