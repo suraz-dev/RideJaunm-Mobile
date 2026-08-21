@@ -6,6 +6,12 @@
  * WHY THIS EXISTS:
  * Pre-authored deterministic fixtures for squad member rosters, local planning
  * roles (Lead, Sweep, Rider), and 6-category pre-ride readiness facts.
+ *
+ * TRUTHFULNESS & SAFETY RULES:
+ * 1. Never imply live invitations, messages, or confirmations.
+ * 2. Never present permit rules as legally current or validated.
+ * 3. Never claim verified native mesh networking capability.
+ * 4. Never use SOS Red (#FF1F3D) for ordinary readiness states.
  */
 
 import {
@@ -95,11 +101,11 @@ export const fixtureTripReadinessChecklist: FixtureTripReadinessItem[] = [
     id: 'readiness-permit',
     category: 'permit',
     state: 'attention',
-    title: 'Conservation Area Permits (ACAP)',
-    titleNepali: 'संरक्षण क्षेत्र अनुमतिपत्र',
-    detail: 'Entry checkpoint at Besisahar requires stamped ACAP pass for mountain sectors.',
+    title: 'Conservation Area Permit Notice (Synthetic Reference)',
+    titleNepali: 'संरक्षण क्षेत्र अनुमतिपत्र सूचना',
+    detail: 'Synthetic advisory for ACAP Besisahar checkpoint. Requirements are not legally validated in this preview; riders must verify current entry rules with local authorities prior to travel.',
     sourceVersion: 'NTNC-PERMIT-2026.08',
-    syntheticDisclosure: 'Static regulatory reference data',
+    syntheticDisclosure: 'Static regulatory reference data (Verify with NTNC/Immigration authorities)',
   },
   {
     id: 'readiness-fuel',
@@ -125,10 +131,10 @@ export const fixtureTripReadinessChecklist: FixtureTripReadinessItem[] = [
     id: 'readiness-safety',
     category: 'safety',
     state: 'ready',
-    title: 'Emergency Contacts & Mesh Protocol',
-    titleNepali: 'आपतकालीन सम्पर्क तथा मेस तयार',
-    detail: 'In-case-of-emergency (ICE) contacts configured. BLE Mesh peer discovery armed.',
+    title: 'Emergency Profile & Mesh Advisory',
+    titleNepali: 'आपतकालीन सम्पर्क तथा मेस सल्लाह',
+    detail: 'In-case-of-emergency (ICE) contact configured locally. Native BLE mesh protocol is unverified in this fixture preview.',
     sourceVersion: 'SAFETY-CONFIG-2026.08',
-    syntheticDisclosure: 'Local device safety profile fixture',
+    syntheticDisclosure: 'Local safety profile fixture (Native mesh discovery unverified)',
   },
 ];

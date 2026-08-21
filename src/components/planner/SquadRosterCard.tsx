@@ -12,7 +12,8 @@
  * 1. Minimum touch target of 48 dp for role radio buttons and action buttons.
  * 2. Role radiogroup announces member name, role, and selection state.
  * 3. Never uses SOS Red (#FF1F3D) for warnings or member status.
- * 4. Zero raw hex/RGBA; uses semantic theme tokens.
+ * 4. Discloses that no real invitations are sent on every card.
+ * 5. Zero raw hex/RGBA; uses semantic theme tokens.
  */
 
 import React from 'react';
@@ -49,9 +50,8 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
       case 'ready':
         return 'volt';
       case 'attention':
-        return 'warning';
       case 'blocked':
-        return 'danger';
+        return 'warning'; // Non-SOS semantic treatment (SOS Red reserved strictly for emergencies)
       case 'unknown':
       default:
         return 'neutral';
@@ -183,13 +183,17 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
             isInvitePending
               ? 'INVITATION PREVIEW PENDING'
               : isNotInvited
-              ? 'SEND PREVIEW INVITE'
-              : 'INVITE CONFIRMED'
+              ? 'TRIGGER PREVIEW INVITE'
+              : 'PREVIEW ROSTER ONLY'
           }
           onPress={() => onToggleInvite(member.id)}
-          variant={isInvitePending ? 'secondary' : 'primary'}
+          variant={isInvitePending ? 'secondary' : isNotInvited ? 'primary' : 'secondary'}
           style={{ minHeight: 48, flex: 1 }}
         />
+        {/* Permanent no-invitation-sent disclosure */}
+        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4, textAlign: 'center' }}>
+          ℹ️ No invitation was sent · Synthetic roster preview only
+        </Text>
       </View>
     </View>
   );

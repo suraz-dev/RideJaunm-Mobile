@@ -107,9 +107,8 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
       case 'ready':
         return 'volt';
       case 'attention':
-        return 'warning';
       case 'blocked':
-        return 'danger';
+        return 'warning'; // Non-SOS semantic treatment (SOS Red reserved strictly for emergencies)
       case 'unknown':
       default:
         return 'neutral';

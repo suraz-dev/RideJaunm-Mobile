@@ -48,6 +48,14 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     const weatherItem = fixtureTripReadinessChecklist.find((c) => c.category === 'weather');
     expect(weatherItem?.state).toBe('unknown');
     expect(weatherItem?.syntheticDisclosure).toContain('Not real-time weather');
+
+    // Safety must not claim verified native mesh networking
+    const safetyItem = fixtureTripReadinessChecklist.find((c) => c.category === 'safety');
+    expect(safetyItem?.detail).toContain('Native BLE mesh protocol is unverified in this fixture preview');
+
+    // Permit must state synthetic reference and verification with authorities
+    const permitItem = fixtureTripReadinessChecklist.find((c) => c.category === 'permit');
+    expect(permitItem?.detail).toContain('Requirements are not legally validated in this preview');
   });
 
   test('navigates from R10 TripPlanner Group Mode to R11 Readiness screen and back', async () => {
@@ -97,11 +105,20 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     expect(view.getByText(/⚠️ Role Validation: No Lead designated\./)).toBeTruthy();
   });
 
-  test('triggers synthetic invite preview with truthful no-invitation-sent confirmation', async () => {
+  test('triggers synthetic invite preview with truthful no-invitation-sent confirmation and permanent disclosures', async () => {
     const view = await render(<TripReadinessScreen />, { wrapper: createWrapper() });
 
+    // Permanent disclosure present on all member cards
+    expect(
+      view.getAllByText('ℹ️ No invitation was sent · Synthetic roster preview only').length
+    ).toBeGreaterThanOrEqual(3);
+
+    // Existing ready members do NOT show "INVITE CONFIRMED"
+    expect(view.queryByText('INVITE CONFIRMED')).toBeNull();
+    expect(view.getAllByText('PREVIEW ROSTER ONLY').length).toBeGreaterThanOrEqual(1);
+
     // Anish starts as not_invited
-    const anishInviteBtn = view.getByText('SEND PREVIEW INVITE');
+    const anishInviteBtn = view.getByText('TRIGGER PREVIEW INVITE');
     await act(async () => {
       fireEvent.press(anishInviteBtn);
     });
@@ -141,10 +158,10 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
 
     expect(view.getByText('Route Candidate Armed')).toBeTruthy();
     expect(view.getByText('Offline Map Pack Advisory')).toBeTruthy();
-    expect(view.getByText('Conservation Area Permits (ACAP)')).toBeTruthy();
+    expect(view.getByText('Conservation Area Permit Notice (Synthetic Reference)')).toBeTruthy();
     expect(view.getByText('Mountain Fuel Gap (48 km)')).toBeTruthy();
     expect(view.getByText('Weather Baseline Advisory')).toBeTruthy();
-    expect(view.getByText('Emergency Contacts & Mesh Protocol')).toBeTruthy();
+    expect(view.getByText('Emergency Profile & Mesh Advisory')).toBeTruthy();
 
     expect(view.getAllByText(/Source: NP-ROUTING-2026.08.15/).length).toBeGreaterThanOrEqual(1);
     expect(
@@ -155,9 +172,9 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
   test('renders cleanly across all 4 theme modes', async () => {
     const themes: ThemeMode[] = ['night', 'dayGlare', 'dusk', 'blackout'];
 
-    for (const theme of themes) {
+    for (const mode of themes) {
       const view = await render(<TripReadinessScreen />, {
-        wrapper: createWrapper(undefined, theme),
+        wrapper: createWrapper(undefined, mode),
       });
       expect(view.getByText('Fixture Trip Readiness — Local Preview')).toBeTruthy();
     }
