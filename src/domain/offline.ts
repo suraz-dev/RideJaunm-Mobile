@@ -15,6 +15,28 @@ export type OfflinePackLifecycle =
   | 'failed'
   | 'storage_full';
 
+/**
+ * Pure state machine transition validation for offline map packs.
+ * Defines allowed deterministic state progressions without side effects.
+ */
+export function canTransitionPackLifecycle(
+  from: OfflinePackLifecycle,
+  to: OfflinePackLifecycle
+): boolean {
+  const allowedTransitions: Record<OfflinePackLifecycle, OfflinePackLifecycle[]> = {
+    queued: ['downloading', 'failed'],
+    downloading: ['paused', 'complete', 'failed', 'storage_full', 'partial'],
+    paused: ['downloading', 'failed'],
+    partial: ['downloading', 'failed'],
+    complete: ['stale', 'downloading'], // stale when expiry reached, downloading on user re-sync
+    stale: ['downloading'],
+    failed: ['queued', 'downloading'],
+    storage_full: ['queued', 'downloading'],
+  };
+
+  return allowedTransitions[from]?.includes(to) ?? false;
+}
+
 export interface BoundingBox {
   minLng: number;
   minLat: number;

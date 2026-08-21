@@ -1,14 +1,15 @@
 /**
- * Safety Capability & Incident Snapshot Models
- * Strictly encodes evidence tiers per ADR-007 (Never claims false public dispatch).
+ * Safety Capability & Incident Snapshot Models (ADR-007)
+ * Strictly restricted to client/device-observed state in Task R6.
+ * Note: Never claims or models public emergency dispatch or server receipt
+ * without validated native transports (reserved for Task S10 / R16).
  */
 
 export type SafetyEvidenceTier =
-  | 'local_observation'       // Stored on device only (armed)
-  | 'mesh_peer_relayed'        // Acknowledged by nearby squad BLE mesh peer
-  | 'sms_gateway_queued'       // Transmitted to cellular SMS relay queue
-  | 'provider_acknowledged'    // Cellular / Satellite gateway provider 200 OK receipt
-  | 'human_confirmed';         // Verified human dispatch / emergency coordinator receipt
+  | 'local_device_armed'        // Armed locally on device (sensor/user trigger)
+  | 'mesh_peer_observed'        // Nearby squad BLE mesh peer observation recorded
+  | 'capability_unavailable'    // Safety transport hardware/sensor not available
+  | 'stand_down_cancelled';      // Cancelled by user during cancel window or stand-down
 
 export interface SafetyIncidentSnapshot {
   incidentId: string;
@@ -21,10 +22,12 @@ export interface SafetyIncidentSnapshot {
   };
   evidenceTier: SafetyEvidenceTier;
   meshHopCount: number;
-  meshPeersNotified: number;
-  cellularAvailableAtArm: boolean;
+  meshPeersObserved: number;
+  isMeshAvailable: boolean;
+  isCellularReported: boolean;
+  isLowBattery: boolean;
   isCancelled: boolean;
   cancellationTimestampUtc?: string;
-  statusText: string;
-  statusTextNepali: string;
+  observationNote: string;
+  observationNoteNepali: string;
 }

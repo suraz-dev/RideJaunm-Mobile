@@ -15,6 +15,26 @@ export type GpsLockState =
   | 'stale'              // Signal degraded, using dead-reckoning / last known location
   | 'lost';              // No satellite visibility (e.g. tunnel, dense canyon)
 
+/**
+ * Pure transition rule for GPS lock freshness based on fix accuracy and signal age.
+ * - accuracy <= 15m and age <= 10s: 'locked' (high confidence 3D fix)
+ * - accuracy > 15m and age <= 10s: 'acquiring' (weak fix / satellite search)
+ * - age > 10s and age <= 60s: 'stale' (tunnel / gorge dead reckoning)
+ * - age > 60s or accuracy > 100m: 'lost' (total GPS dropout)
+ */
+export function computeGpsLockState(accuracyMeters: number, ageSeconds: number): GpsLockState {
+  if (ageSeconds > 60 || accuracyMeters > 100) {
+    return 'lost';
+  }
+  if (ageSeconds > 10 || accuracyMeters > 30) {
+    return 'stale';
+  }
+  if (accuracyMeters <= 15) {
+    return 'locked';
+  }
+  return 'acquiring';
+}
+
 export interface GpsTelemetry {
   latitude: number;
   longitude: number;

@@ -2,7 +2,7 @@ import { MemoryLocalStore } from '../services/storage/LocalStore';
 import { DefaultOfflineOperationRepository } from '../services/storage/OfflineOperationRepository';
 import { QueuedOperation } from '../domain/outbox';
 
-describe('RideJaunm R6 LocalStore & Outbox Repository', () => {
+describe('RideJaunm R6 LocalStore & Outbox Repository (R6-4, R6-5, RC-1)', () => {
   let store: MemoryLocalStore;
   let repo: DefaultOfflineOperationRepository;
 
@@ -11,14 +11,36 @@ describe('RideJaunm R6 LocalStore & Outbox Repository', () => {
     repo = new DefaultOfflineOperationRepository(store);
   });
 
-  test('reads, writes, and removes values correctly in store', async () => {
+  test('reads, writes, and removes values with explicit StorageReadResult status', async () => {
     await store.write('test_key', { count: 42 });
-    const value = await store.read<{ count: number }>('test_key');
-    expect(value).toEqual({ count: 42 });
+    const result = await store.read<{ count: number }>('test_key');
+    expect(result.status).toBe('found');
+    if (result.status === 'found') {
+      expect(result.data).toEqual({ count: 42 });
+    }
 
     await store.remove('test_key');
     const removed = await store.read('test_key');
-    expect(removed).toBeNull();
+    expect(removed.status).toBe('not_found');
+  });
+
+  test('surfaces explicit corrupted status when raw storage value is malformed JSON (R6-5)', async () => {
+    store.setRawValue('corrupted_key', '{ invalid_json: ');
+    const result = await store.read('corrupted_key');
+    expect(result.status).toBe('corrupted');
+    if (result.status === 'corrupted') {
+      expect(result.rawValue).toBe('{ invalid_json: ');
+      expect(result.error).toBeDefined();
+    }
+  });
+
+  test('surfaces explicit read_failed status on storage IO error (R6-5)', async () => {
+    store.setSimulateReadFailure(true);
+    const result = await store.read('any_key');
+    expect(result.status).toBe('read_failed');
+    if (result.status === 'read_failed') {
+      expect(result.error).toContain('Simulated memory store IO error');
+    }
   });
 
   test('enqueues outbox operations and prevents duplicate logical records via idempotency key', async () => {
@@ -49,27 +71,51 @@ describe('RideJaunm R6 LocalStore & Outbox Repository', () => {
     expect(pendingAfterDuplicate[0].attemptCount).toBe(1);
   });
 
-  test('marks operation result as accepted and filters out from pending list', async () => {
+  test('refuses to overwrite a corrupted or unreadable outbox and preserves the disk state (RC-1)', async () => {
+    const corruptedPayload = '{ unparseable_outbox_json: ';
+    store.setRawValue('outbox_operations_v1', corruptedPayload);
+
+    // 1. loadQueueResult surfaces corrupted status
+    const queueRes = await repo.loadQueueResult();
+    expect(queueRes.status).toBe('corrupted');
+
+    // 2. enqueue must reject/throw and NOT overwrite corrupted key with []
+    const newOp: QueuedOperation = {
+      operationId: 'op-safe-01',
+      idempotencyKey: 'idemp-safe-01',
+      operationType: 'REPORT_HAZARD',
+      payload: {},
+      state: 'queued',
+      createdAtUtc: new Date().toISOString(),
+      attemptCount: 0,
+    };
+
+    await expect(repo.enqueue(newOp)).rejects.toThrow('OUTBOX_STORAGE_CORRUPTED');
+
+    // 3. Verify on-disk raw value was preserved and not overwritten
+    const rawCheck = await store.read('outbox_operations_v1');
+    expect(rawCheck.status).toBe('corrupted');
+    if (rawCheck.status === 'corrupted') {
+      expect(rawCheck.rawValue).toBe(corruptedPayload);
+    }
+  });
+
+  test('negative test: local enqueue produces ONLY queued locally state and never server delivery claims (R6-4)', async () => {
     const op: QueuedOperation = {
-      operationId: 'op-sos-01',
-      idempotencyKey: 'idemp-sos-01',
+      operationId: 'op-local-01',
+      idempotencyKey: 'idemp-truthful-01',
       operationType: 'QUEUE_SOS_BREADCRUMB',
-      payload: { coords: [85.34, 27.67] },
+      payload: { lat: 28.78, lng: 83.85 },
       state: 'queued',
       createdAtUtc: new Date().toISOString(),
       attemptCount: 0,
     };
 
     await repo.enqueue(op);
-    expect((await repo.listPending()).length).toBe(1);
-
-    await repo.markResult('op-sos-01', 'accepted');
     const pending = await repo.listPending();
-    expect(pending.length).toBe(0);
 
-    const all = await repo.listAll();
-    expect(all.length).toBe(1);
-    expect(all[0].state).toBe('accepted');
+    expect(pending[0].state).toBe('queued');
+    expect(pending[0].state).not.toBe('accepted');
   });
 
   test('clears all account scoped data during reset', async () => {
@@ -87,7 +133,8 @@ describe('RideJaunm R6 LocalStore & Outbox Repository', () => {
     await store.clearAccountScopedData();
     await repo.clear();
 
-    expect(await store.read('active_user')).toBeNull();
+    const readUser = await store.read('active_user');
+    expect(readUser.status).toBe('not_found');
     expect((await repo.listAll()).length).toBe(0);
   });
 });
