@@ -11,3 +11,4 @@ export * from './telemetryPresentation';
 export * from './tripPlanner';
 export * from './tripReadiness';
 export * from './squadCommunity';
+export * from './profileSettings';
