@@ -225,6 +225,12 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       wrapper: createWrapper(undefined, 'night', allOfflineRegionFixtures),
     });
 
+    // In R14, the offline packs summary is located under the Settings tab
+    const settingsTab = view.getByLabelText('Select Settings tab (सेटिङ)');
+    await act(async () => {
+      fireEvent.press(settingsTab);
+    });
+
     expect(view.getByText(/Nepal Offline Map Packs — Fixture Preview/)).toBeTruthy();
     expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
     expect(view.getByText('DOWNLOADING PREVIEW (45%)')).toBeTruthy();

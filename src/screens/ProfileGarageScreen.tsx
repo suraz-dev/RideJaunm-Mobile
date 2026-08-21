@@ -1,71 +1,56 @@
+/**
+ * ============================================================================
+ * PROFILE, GARAGE, HISTORY, AND SETTINGS SCREEN (R14)
+ * ============================================================================
+ *
+ * Coordinates:
+ * 1. 4 Accessible inner tabs: Profile, Garage, History, and Settings.
+ * 2. Local language preview selection (English, Nepali, Hindi) updating local copy.
+ * 3. Calendar display selection (AD / BS) using pre-authored date strings.
+ * 4. Integration with offline maps region manager.
+ * 5. Permanent synthetic preview disclosures on every surface.
+ * 6. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
+ */
+
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
-import { Button } from '../components/primitives/Button';
+import { RiderProfileView } from '../components/profile/RiderProfileView';
+import { GarageVehiclesView } from '../components/profile/GarageVehiclesView';
+import { RideHistoryListView } from '../components/profile/RideHistoryListView';
+import { SettingsLocaleView } from '../components/profile/SettingsLocaleView';
 import { OfflineMapsScreen } from './OfflineMapsScreen';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
-import { ThemeMode, primitive } from '../design/tokens';
-import * as Haptics from 'expo-haptics';
+import { primitive } from '../design/tokens';
+import {
+  AppPreviewLanguage,
+  CalendarSystemPreview,
+} from '../domain/profileSettings';
+import {
+  primaryRiderProfileFixture,
+  allFixtureMotorcycles,
+  allFixtureRideHistory,
+} from '../fixtures/profileSettings.fixture';
+
+export type ProfileInnerTab = 'profile' | 'garage' | 'history' | 'settings';
 
 export const ProfileGarageScreen: React.FC = () => {
-  const { mode, setMode, colors } = useTheme();
-  const { offlineRegions, pendingOperationsCount, resetAccountData } = useAppState();
+  const { colors, mode } = useTheme();
+  const isDayGlare = mode === 'dayGlare';
+
+  const [activeTab, setActiveTab] = useState<ProfileInnerTab>('profile');
+  const [language, setLanguage] = useState<AppPreviewLanguage>('en');
+  const [calendarSystem, setCalendarSystem] = useState<CalendarSystemPreview>('AD');
   const [showOfflineManager, setShowOfflineManager] = useState(false);
 
-  const themesList: { key: ThemeMode; label: string; desc: string }[] = [
-    { key: 'night', label: 'Night (रात्री)', desc: 'Tactical dark base (Default)' },
-    { key: 'dayGlare', label: 'Day-Glare (घाम)', desc: 'High-contrast sunlight mode' },
-    { key: 'dusk', label: 'Dusk (साँझ)', desc: 'Soft mountain twilight' },
-    { key: 'blackout', label: 'Blackout (कालो)', desc: 'Ultra-low battery OLED dark' },
+  const tabs: { tab: ProfileInnerTab; label: string; labelNepali: string; icon: string }[] = [
+    { tab: 'profile', label: 'Profile', labelNepali: 'प्रोफाइल', icon: '👤' },
+    { tab: 'garage', label: 'Garage', labelNepali: 'ग्यारेज', icon: '🏍️' },
+    { tab: 'history', label: 'History', labelNepali: 'इतिहास', icon: '📜' },
+    { tab: 'settings', label: 'Settings', labelNepali: 'सेटिङ', icon: '⚙️' },
   ];
-
-  const handleThemeChange = (newMode: ThemeMode) => {
-    Haptics.selectionAsync();
-    setMode(newMode);
-  };
-
-  const getLifecycleBadge = (lifecycle: string, progressPercentage?: number) => {
-    switch (lifecycle) {
-      case 'complete':
-        return <Badge label="COMPLETE (FIXTURE)" variant="volt" size="sm" />;
-      case 'downloading':
-        return (
-          <Badge
-            label={`DOWNLOADING PREVIEW (${progressPercentage ?? 45}%)`}
-            variant="cyan"
-            size="sm"
-          />
-        );
-      case 'queued':
-        return <Badge label="QUEUED (FIXTURE)" variant="neutral" size="sm" />;
-      case 'paused':
-        return (
-          <Badge
-            label={`PAUSED PREVIEW (${progressPercentage ?? 60}%)`}
-            variant="warning"
-            size="sm"
-          />
-        );
-      case 'partial':
-        return (
-          <Badge
-            label={`PARTIAL PREVIEW (${progressPercentage ?? 70}%)`}
-            variant="warning"
-            size="sm"
-          />
-        );
-      case 'stale':
-        return <Badge label="STALE (FIXTURE UPDATE PREVIEW)" variant="warning" size="sm" />;
-      case 'failed':
-        return <Badge label="FAILED (SIMULATED)" variant="warning" size="sm" />;
-      case 'storage_full':
-        return <Badge label="STORAGE FULL (FIXTURE)" variant="warning" size="sm" />;
-      default:
-        return <Badge label="FIXTURE PREVIEW" variant="neutral" size="sm" />;
-    }
-  };
 
   if (showOfflineManager) {
     return <OfflineMapsScreen onBackToMain={() => setShowOfflineManager(false)} />;
@@ -76,127 +61,114 @@ export const ProfileGarageScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
     >
-      <Text variant="h1" style={styles.title}>
-        Garage & Profile (प्रोफाइल)
+      {/* Screen Title & Subtitle */}
+      <Text variant="h1" style={{ color: colors.text }}>
+        {language === 'ne'
+          ? 'प्रोफाइल तथा ग्यारेज'
+          : language === 'hi'
+          ? 'प्रोफ़ाइल और गैरेज'
+          : 'Profile & Garage'}
+      </Text>
+      <Text variant="bodyMedium" muted style={styles.subtitle}>
+        {language === 'ne'
+          ? 'स्थानीय राइडर प्रोफाइल, ग्यारेज, सवारी इतिहास र पूर्वावलोकन सेटिङ।'
+          : language === 'hi'
+          ? 'स्थानीय राइडर प्रोफ़ाइल, गैरेज, राइड इतिहास और पूर्वावलोकन सेटिंग्स।'
+          : 'Simulated rider identity, garage fleet, ride history, and locale settings.'}
       </Text>
 
-      {/* Motorcycle Garage Card */}
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={styles.garageHeader}>
-          <View>
-            <Text variant="h2">Royal Enfield Himalayan 450</Text>
-            <Text variant="mono" style={{ color: primitive.color.volt[400], marginTop: 2 }}>
-              BA 02 PA 4821 · Kaza Brown
-            </Text>
-          </View>
-          <Badge label="VERIFIED" variant="volt" size="sm" />
-        </View>
-
-        <View style={[styles.statsRow, { borderTopColor: colors.borderSubtle }]}>
-          <View style={styles.statBox}>
-            <Text variant="bodySmall" muted>TOTAL RIDES</Text>
-            <Text variant="h3" style={{ color: colors.text }}>48</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text variant="bodySmall" muted>DISTANCE</Text>
-            <Text variant="h3" style={{ color: primitive.color.cyan[400] }}>4,820 km</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text variant="bodySmall" muted>OUTBOX QUEUE</Text>
-            <Text variant="h3" style={{ color: pendingOperationsCount > 0 ? primitive.color.semantic.warning : primitive.color.volt[400] }}>
-              {pendingOperationsCount}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Offline Region Cache Manager (Fixture Preview) */}
-      <View style={styles.sectionHeaderRow}>
-        <Text variant="h3" style={styles.sectionHeader}>
-          Nepal Offline Map Packs — Fixture Preview ({offlineRegions.length})
+      {/* Top Synthetic Preview Disclaimer */}
+      <View
+        style={[
+          styles.disclaimerBanner,
+          {
+            backgroundColor: isDayGlare ? primitive.color.snow[50] : colors.surfaceElevated,
+            borderColor: colors.borderSubtle,
+          },
+        ]}
+      >
+        <Badge label="SYNTHETIC PREVIEW" variant="neutral" size="sm" />
+        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
+          Deterministic local fixtures · Not connected to backend user accounts or live telemetry.
         </Text>
-        <TouchableOpacity
-          style={styles.manageBtn}
-          onPress={() => setShowOfflineManager(true)}
-          accessible
-          accessibilityRole="button"
-          accessibilityLabel="Open offline region manager"
-        >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            MANAGE ➔
-          </Text>
-        </TouchableOpacity>
       </View>
 
-      <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-        {offlineRegions.map((region, idx) => (
-          <React.Fragment key={region.id}>
-            <View style={styles.regionRow}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text variant="bodyMedium" style={{ fontWeight: '700' }}>
-                  {region.name}
-                </Text>
-                <Text variant="mono" style={{ color: colors.textSubtle }}>
-                  {Math.round(region.sizeBytes / (1024 * 1024))} MB · {region.includes3dElevation ? '3D Elevation' : '2D Tiles'}
-                </Text>
-              </View>
-              {getLifecycleBadge(region.lifecycle, region.progressPercentage)}
-            </View>
-            {idx < offlineRegions.length - 1 && (
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            )}
-          </React.Fragment>
-        ))}
-
-        <Button
-          label="OPEN OFFLINE MAPS MANAGER"
-          onPress={() => setShowOfflineManager(true)}
-          variant="secondary"
-          style={{ marginTop: primitive.spacing[3] }}
-        />
-      </View>
-
-      {/* 4 Theme Modes Selector */}
-      <Text variant="h3" style={styles.sectionHeader}>
-        Theme & Ambient Glare Mode
-      </Text>
-
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {themesList.map((t) => {
-          const isSelected = mode === t.key;
+      {/* 4 Primary Inner Tabs (Profile, Garage, History, Settings) */}
+      <View
+        style={[styles.tablist, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        accessibilityRole="tablist"
+        accessibilityLabel="Profile section navigation tabs"
+      >
+        {tabs.map((t) => {
+          const isTabActive = activeTab === t.tab;
           return (
             <TouchableOpacity
-              key={t.key}
-              activeOpacity={0.8}
-              onPress={() => handleThemeChange(t.key)}
+              key={t.tab}
               style={[
-                styles.themeOption,
+                styles.tabBtn,
                 {
-                  backgroundColor: isSelected ? colors.surfaceElevated : 'transparent',
-                  borderColor: isSelected ? primitive.color.volt[400] : 'transparent',
+                  backgroundColor: isTabActive ? colors.surfaceElevated : 'transparent',
+                  borderColor: isTabActive ? primitive.color.volt[400] : 'transparent',
                 },
               ]}
+              onPress={() => setActiveTab(t.tab)}
+              accessible
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isTabActive }}
+              accessibilityLabel={`Select ${t.label} tab (${t.labelNepali})`}
             >
-              <View>
-                <Text variant="bodyMedium" style={{ fontWeight: isSelected ? '700' : '500' }}>
-                  {t.label}
-                </Text>
-                <Text variant="bodySmall" muted>
-                  {t.desc}
-                </Text>
-              </View>
-              {isSelected && <Badge label="ACTIVE" variant="volt" size="sm" />}
+              <Text
+                variant="bodySmall"
+                style={{
+                  color: isTabActive ? colors.text : colors.textMuted,
+                  fontWeight: isTabActive ? '700' : '500',
+                  fontSize: 11,
+                }}
+              >
+                {t.icon} {t.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Button
-        label="RESET LOCAL CACHE & OUTBOX"
-        onPress={resetAccountData}
-        variant="secondary"
-        style={{ marginTop: primitive.spacing[4] }}
-      />
+      {/* TAB 1: RIDER PROFILE */}
+      {activeTab === 'profile' && (
+        <RiderProfileView
+          profile={primaryRiderProfileFixture}
+          language={language}
+          calendarSystem={calendarSystem}
+        />
+      )}
+
+      {/* TAB 2: GARAGE */}
+      {activeTab === 'garage' && (
+        <GarageVehiclesView
+          vehicles={allFixtureMotorcycles}
+          language={language}
+          calendarSystem={calendarSystem}
+        />
+      )}
+
+      {/* TAB 3: RIDE HISTORY */}
+      {activeTab === 'history' && (
+        <RideHistoryListView
+          historyItems={allFixtureRideHistory}
+          language={language}
+          calendarSystem={calendarSystem}
+        />
+      )}
+
+      {/* TAB 4: SETTINGS & LOCALE */}
+      {activeTab === 'settings' && (
+        <SettingsLocaleView
+          currentLanguage={language}
+          onLanguageChange={setLanguage}
+          currentCalendar={calendarSystem}
+          onCalendarChange={setCalendarSystem}
+          onOpenOfflineManager={() => setShowOfflineManager(true)}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -206,66 +178,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: primitive.spacing[5],
-    paddingTop: 60,
-    paddingBottom: 100,
-  },
-  title: {
-    marginBottom: primitive.spacing[5],
-  },
-  card: {
-    borderRadius: primitive.radius.lg,
     padding: primitive.spacing[4],
-    borderWidth: 1,
-    marginBottom: primitive.spacing[4],
+    paddingTop: 56,
+    paddingBottom: 120,
   },
-  garageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: primitive.spacing[4],
-  },
-  statsRow: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingTop: primitive.spacing[3],
-  },
-  statBox: {
-    flex: 1,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: primitive.spacing[3],
+  subtitle: {
+    marginTop: primitive.spacing[1],
     marginBottom: primitive.spacing[3],
   },
-  sectionHeader: {
-    marginVertical: 0,
-  },
-  manageBtn: {
-    minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingHorizontal: primitive.spacing[2],
-  },
-  regionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  divider: {
-    height: 1,
-    marginVertical: primitive.spacing[2],
-  },
-  themeOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  disclaimerBanner: {
     padding: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
-    marginVertical: 2,
+    marginBottom: primitive.spacing[4],
+  },
+  tablist: {
+    flexDirection: 'row',
+    borderRadius: primitive.radius.lg,
+    padding: 3,
+    borderWidth: 1,
+    marginBottom: primitive.spacing[4],
+  },
+  tabBtn: {
+    flex: 1,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: primitive.radius.md,
+    borderWidth: 1.5,
   },
 });
