@@ -2,7 +2,7 @@ import { MemoryLocalStore } from '../services/storage/LocalStore';
 import { DefaultOfflineOperationRepository } from '../services/storage/OfflineOperationRepository';
 import { QueuedOperation } from '../domain/outbox';
 
-describe('RideJaunm R6 LocalStore & Outbox Repository (R6-4, R6-5)', () => {
+describe('RideJaunm R6 LocalStore & Outbox Repository (R6-4, R6-5, RC-1)', () => {
   let store: MemoryLocalStore;
   let repo: DefaultOfflineOperationRepository;
 
@@ -69,6 +69,35 @@ describe('RideJaunm R6 LocalStore & Outbox Repository (R6-4, R6-5)', () => {
     const pendingAfterDuplicate = await repo.listPending();
     expect(pendingAfterDuplicate.length).toBe(1);
     expect(pendingAfterDuplicate[0].attemptCount).toBe(1);
+  });
+
+  test('refuses to overwrite a corrupted or unreadable outbox and preserves the disk state (RC-1)', async () => {
+    const corruptedPayload = '{ unparseable_outbox_json: ';
+    store.setRawValue('outbox_operations_v1', corruptedPayload);
+
+    // 1. loadQueueResult surfaces corrupted status
+    const queueRes = await repo.loadQueueResult();
+    expect(queueRes.status).toBe('corrupted');
+
+    // 2. enqueue must reject/throw and NOT overwrite corrupted key with []
+    const newOp: QueuedOperation = {
+      operationId: 'op-safe-01',
+      idempotencyKey: 'idemp-safe-01',
+      operationType: 'REPORT_HAZARD',
+      payload: {},
+      state: 'queued',
+      createdAtUtc: new Date().toISOString(),
+      attemptCount: 0,
+    };
+
+    await expect(repo.enqueue(newOp)).rejects.toThrow('OUTBOX_STORAGE_CORRUPTED');
+
+    // 3. Verify on-disk raw value was preserved and not overwritten
+    const rawCheck = await store.read('outbox_operations_v1');
+    expect(rawCheck.status).toBe('corrupted');
+    if (rawCheck.status === 'corrupted') {
+      expect(rawCheck.rawValue).toBe(corruptedPayload);
+    }
   });
 
   test('negative test: local enqueue produces ONLY queued locally state and never server delivery claims (R6-4)', async () => {

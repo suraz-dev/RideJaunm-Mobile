@@ -1,8 +1,8 @@
 /**
  * ============================================================================
- * GLOBAL APP STATE CONTEXT & PERSISTENCE ENGINE (R6-2)
+ * GLOBAL APP STATE CONTEXT & PERSISTENCE ENGINE (R6-2, RC-2)
  * ============================================================================
- * 
+ *
  * WHY THIS EXISTS:
  * This React Context acts as the central brain of the RideJaunm mobile app.
  * It coordinates:
@@ -11,15 +11,16 @@
  * 3. Offline map regions downloaded to the device.
  * 4. Offline outbox queue synchronization.
  * 5. Emergency SOS safety incident observation states.
- * 
+ *
  * RESTART RECOVERY LIFECYCLE:
  * When the app boots (or reboots after being closed in the background), the
  * `hydrate()` effect executes. It reads each persisted entity from `LocalStore`
  * and restores the user's active route, connectivity profile, and pending outbox items.
- * 
- * FAULT RESILIENCE:
- * If any stored key is corrupted, `AppStateContext` catches the `corrupted` or `read_failed`
- * status, sets an internal warning, and falls back to safe default fixtures without crashing.
+ *
+ * FAULT VISIBILITY FOR EVERY HYDRATED KEY (RC-2):
+ * If ANY stored key (route, connection, offline regions, safety observation, or outbox)
+ * is corrupted or fails to read, `AppStateContext` surfaces a descriptive non-sensitive
+ * warning in `storageFaults` and preserves safe defaults without crashing.
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -94,8 +95,11 @@ interface AppStateContextValue {
   /** Wipe all user cache and outbox data (e.g. on account reset) */
   resetAccountData: () => Promise<void>;
 
-  /** Warning string if any storage key experienced corruption during hydration */
+  /** Primary warning string if any storage key experienced corruption during hydration */
   storageFault?: string;
+
+  /** Exhaustive list of all storage faults surfaced during hydration (RC-2) */
+  storageFaults: string[];
 }
 
 const AppStateContext = createContext<AppStateContextValue | undefined>(undefined);
@@ -112,7 +116,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
     useState<OfflineRegion[]>(allOfflineRegionFixtures);
   const [pendingOps, setPendingOps] = useState<QueuedOperation[]>([]);
   const [activeSosSnapshot, setSosState] = useState<SafetyIncidentSnapshot | undefined>(undefined);
-  const [storageFault, setStorageFault] = useState<string | undefined>(undefined);
+  const [storageFaults, setStorageFaults] = useState<string[]>([]);
 
   const outboxRepo: OfflineOperationRepository = new DefaultOfflineOperationRepository(store);
 
@@ -120,12 +124,14 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
    * Hydration Effect:
    * Runs once when the component mounts. Restores saved route, connection mode,
    * offline regions, safety observations, and pending outbox operations from local disk.
+   * Collects and surfaces faults for every key class (RC-2).
    */
   useEffect(() => {
     let isMounted = true;
 
     async function hydrate() {
       await store.hydrate();
+      const detectedFaults: string[] = [];
 
       // 1. Hydrate Active Route
       const routeRes: StorageReadResult<RouteCandidate> =
@@ -133,14 +139,16 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
       if (routeRes.status === 'found' && isMounted) {
         setActiveRouteState(routeRes.data);
       } else if (routeRes.status === 'corrupted' || routeRes.status === 'read_failed') {
-        if (isMounted) setStorageFault(`Route storage warning: ${routeRes.status}`);
+        detectedFaults.push(`route:${routeRes.status}`);
       }
 
-      // 2. Hydrate Connection Mode
+      // 2. Hydrate Connection Mode & GPS Freshness
       const connRes: StorageReadResult<'online' | 'meshOnly' | 'deadZone'> =
         await store.read<'online' | 'meshOnly' | 'deadZone'>(STORAGE_KEYS.CONNECTION_MODE);
       if (connRes.status === 'found' && isMounted) {
         applyConnectionMode(connRes.data);
+      } else if (connRes.status === 'corrupted' || connRes.status === 'read_failed') {
+        detectedFaults.push(`connection:${connRes.status}`);
       }
 
       // 3. Hydrate Offline Regions
@@ -148,6 +156,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
         await store.read<OfflineRegion[]>(STORAGE_KEYS.OFFLINE_REGIONS);
       if (regionRes.status === 'found' && isMounted) {
         setOfflineRegions(regionRes.data);
+      } else if (regionRes.status === 'corrupted' || regionRes.status === 'read_failed') {
+        detectedFaults.push(`offline_regions:${regionRes.status}`);
       }
 
       // 4. Hydrate Active Safety Observation
@@ -155,12 +165,21 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
         await store.read<SafetyIncidentSnapshot>(STORAGE_KEYS.ACTIVE_SAFETY);
       if (safetyRes.status === 'found' && isMounted) {
         setSosState(safetyRes.data);
+      } else if (safetyRes.status === 'corrupted' || safetyRes.status === 'read_failed') {
+        detectedFaults.push(`safety:${safetyRes.status}`);
       }
 
-      // 5. Hydrate Outbox Queue
-      const pending = await outboxRepo.listPending();
-      if (isMounted) {
+      // 5. Hydrate Outbox Queue & Detect Outbox Faults (RC-1 & RC-2)
+      const outboxRes = await outboxRepo.loadQueueResult();
+      if (outboxRes.status === 'found' && isMounted) {
+        const pending = outboxRes.data.filter((op) => op.state === 'queued' || op.state === 'sending');
         setPendingOps(pending);
+      } else if (outboxRes.status === 'corrupted' || outboxRes.status === 'read_failed') {
+        detectedFaults.push(`outbox:${outboxRes.status}`);
+      }
+
+      if (isMounted) {
+        setStorageFaults(detectedFaults);
         setIsHydrated(true);
       }
     }
@@ -232,7 +251,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
     setConnectionState(connectionOnlineSnapshot);
     setOfflineRegions(allOfflineRegionFixtures);
     setSosState(undefined);
-    setStorageFault(undefined);
+    setStorageFaults([]);
   };
 
   return (
@@ -255,7 +274,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
         activeSosSnapshot,
         setSosSnapshot: handleSetSosSnapshot,
         resetAccountData: handleResetAccountData,
-        storageFault,
+        storageFault: storageFaults.length > 0 ? storageFaults.join(', ') : undefined,
+        storageFaults,
       }}
     >
       {children}

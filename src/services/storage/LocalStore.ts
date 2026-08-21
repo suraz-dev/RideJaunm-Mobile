@@ -2,17 +2,17 @@
  * ============================================================================
  * PROVIDER-NEUTRAL LOCAL STORAGE ABSTRACTION (ADR-005)
  * ============================================================================
- * 
+ *
  * WHY THIS EXISTS:
  * In RideJaunm, we need a reliable way to save user settings, routes, and
  * offline outbox transactions to the device disk.
- * 
+ *
  * To prevent the rest of our app from being tightly coupled to a single storage
  * library (like AsyncStorage, MMKV, or SQLCipher), we define an abstract
  * `LocalStore` interface. This allows us to swap the underlying storage engine
  * in the future (e.g. upgrading to hardware-encrypted SQLCipher in native builds)
  * without breaking any screen or business logic.
- * 
+ *
  * FAULT VISIBILITY (R6-5):
  * Instead of silently returning null on errors (which could mask file corruption),
  * `read<T>()` returns a discriminated union (`StorageReadResult<T>`) indicating

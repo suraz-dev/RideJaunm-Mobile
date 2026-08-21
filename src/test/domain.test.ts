@@ -16,8 +16,8 @@ import {
   nepalTimezoneFixture,
   calendarTestFixtures,
 } from '../fixtures';
-import { GpsLockState } from '../domain/connectivity';
-import { OfflinePackLifecycle } from '../domain/offline';
+import { GpsLockState, computeGpsLockState } from '../domain/connectivity';
+import { OfflinePackLifecycle, canTransitionPackLifecycle } from '../domain/offline';
 import { SafetyEvidenceTier } from '../domain/safety';
 
 describe('RideJaunm R6 Domain Models, Fixtures & Locale Matrix', () => {
@@ -46,6 +46,23 @@ describe('RideJaunm R6 Domain Models, Fixtures & Locale Matrix', () => {
     expect(gpsAcquiringFixture.accuracyMeters).toBeGreaterThan(15);
   });
 
+  test('validates GPS freshness pure transition rules (RC-4)', () => {
+    // 1. High accuracy recent fix -> locked
+    expect(computeGpsLockState(4.2, 1)).toBe('locked');
+    expect(computeGpsLockState(14.9, 8)).toBe('locked');
+
+    // 2. Low accuracy recent fix -> acquiring
+    expect(computeGpsLockState(25.0, 3)).toBe('acquiring');
+
+    // 3. Degraded signal age -> stale
+    expect(computeGpsLockState(5.0, 15)).toBe('stale');
+    expect(computeGpsLockState(35.0, 5)).toBe('stale');
+
+    // 4. Lost signal (age > 60s or extreme inaccuracy) -> lost
+    expect(computeGpsLockState(5.0, 65)).toBe('lost');
+    expect(computeGpsLockState(150.0, 2)).toBe('lost');
+  });
+
   test('covers all 8 required offline region pack lifecycle states (R6-1)', () => {
     const requiredLifecycles: OfflinePackLifecycle[] = [
       'queued',
@@ -65,6 +82,24 @@ describe('RideJaunm R6 Domain Models, Fixtures & Locale Matrix', () => {
     });
 
     expect(allOfflineRegionFixtures.length).toBeGreaterThanOrEqual(8);
+  });
+
+  test('validates offline pack lifecycle allowed and blocked transition rules (RC-4)', () => {
+    // Allowed valid transitions
+    expect(canTransitionPackLifecycle('queued', 'downloading')).toBe(true);
+    expect(canTransitionPackLifecycle('downloading', 'complete')).toBe(true);
+    expect(canTransitionPackLifecycle('downloading', 'paused')).toBe(true);
+    expect(canTransitionPackLifecycle('downloading', 'storage_full')).toBe(true);
+    expect(canTransitionPackLifecycle('downloading', 'partial')).toBe(true);
+    expect(canTransitionPackLifecycle('complete', 'stale')).toBe(true);
+    expect(canTransitionPackLifecycle('stale', 'downloading')).toBe(true);
+    expect(canTransitionPackLifecycle('failed', 'queued')).toBe(true);
+
+    // Blocked invalid transitions
+    expect(canTransitionPackLifecycle('complete', 'queued')).toBe(false);
+    expect(canTransitionPackLifecycle('stale', 'paused')).toBe(false);
+    expect(canTransitionPackLifecycle('storage_full', 'complete')).toBe(false);
+    expect(canTransitionPackLifecycle('paused', 'complete')).toBe(false);
   });
 
   test('covers full approved R6 safety matrix without public dispatch claims (R6-1 & R6-3)', () => {
