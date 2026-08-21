@@ -1,15 +1,15 @@
 /**
  * ============================================================================
- * TACTICAL MAP CONTROLS OVERLAY (R8)
+ * TACTICAL MAP CONTROLS OVERLAY (R8 / R9)
  * ============================================================================
  *
  * WHY THIS EXISTS:
  * Floating tactical button bar for camera rotation, pitch, recentering,
- * layers sheet, and zoom control on the map surface.
+ * follow mode, layers sheet, and zoom control on the map surface.
  *
  * ACCESSIBILITY & TOUCH TARGET INVARIANTS:
  * 1. EVERY button has a minimum touch target of 48 dp (primitive.size.targetMin).
- * 2. High-contrast border and background derived from design tokens.
+ * 2. Follow button is enabled ONLY when GPS is 'locked'.
  * 3. Does not obscure OpenStreetMap attribution at bottom-left.
  */
 
@@ -22,8 +22,11 @@ import { primitive } from '../../design/tokens';
 export interface MapControlsProps {
   bearingDegrees: number;
   pitchDegrees: number;
+  isFollowActive?: boolean;
+  isFollowDisabled?: boolean;
   onResetCompass: () => void;
   onTogglePitch: () => void;
+  onToggleFollow?: () => void;
   onRecenter: () => void;
   onOpenLayers: () => void;
   onZoomIn: () => void;
@@ -33,8 +36,11 @@ export interface MapControlsProps {
 export const MapControls: React.FC<MapControlsProps> = ({
   bearingDegrees,
   pitchDegrees,
+  isFollowActive = false,
+  isFollowDisabled = false,
   onResetCompass,
   onTogglePitch,
+  onToggleFollow,
   onRecenter,
   onOpenLayers,
   onZoomIn,
@@ -101,7 +107,49 @@ export const MapControls: React.FC<MapControlsProps> = ({
         </Text>
       </TouchableOpacity>
 
-      {/* 3. Layers Sheet Trigger */}
+      {/* 3. Follow Rider Position Toggle (Enabled only for locked GPS) */}
+      <TouchableOpacity
+        style={[
+          styles.controlBtn,
+          {
+            backgroundColor: isFollowActive
+              ? colors.interactive
+              : isFollowDisabled
+              ? colors.surfaceCard
+              : colors.surfaceElevated,
+            borderColor: isFollowActive ? colors.interactive : colors.border,
+          },
+        ]}
+        onPress={onToggleFollow}
+        disabled={isFollowDisabled}
+        accessible
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isFollowDisabled, selected: isFollowActive }}
+        accessibilityLabel={
+          isFollowDisabled
+            ? 'Follow mode disabled: GPS is not locked'
+            : isFollowActive
+            ? 'Follow mode active: Camera centered on rider position'
+            : 'Tap to enable camera follow on rider position'
+        }
+      >
+        <Text
+          variant="mono"
+          style={{
+            color: isFollowDisabled
+              ? colors.textSubtle
+              : isFollowActive
+              ? primitive.color.graphite[950]
+              : colors.interactive,
+            fontSize: 15,
+            fontWeight: '900',
+          }}
+        >
+          ➤
+        </Text>
+      </TouchableOpacity>
+
+      {/* 4. Layers Sheet Trigger */}
       <TouchableOpacity
         style={[styles.controlBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
         onPress={onOpenLayers}
@@ -114,7 +162,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
         </Text>
       </TouchableOpacity>
 
-      {/* 4. Recenter to Route Origin */}
+      {/* 5. Recenter to Route Origin */}
       <TouchableOpacity
         style={[styles.controlBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
         onPress={onRecenter}
@@ -127,7 +175,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
         </Text>
       </TouchableOpacity>
 
-      {/* 5. Zoom In / Zoom Out Group (Each meeting 48dp targetMin) */}
+      {/* 6. Zoom In / Zoom Out Group (Each meeting 48dp targetMin) */}
       <View style={[styles.zoomGroup, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <TouchableOpacity
           style={styles.zoomHalfBtn}

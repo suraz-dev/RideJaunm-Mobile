@@ -1,17 +1,19 @@
 /**
  * ============================================================================
- * RIDE HOME SCREEN (R7 / R8 INTEGRATION)
+ * RIDE HOME SCREEN (R7 / R8 / R9 INTEGRATION)
  * ============================================================================
  *
  * Coordinates:
  * 1. Topographic MapSurface with synthetic route and marker overlays.
  * 2. 3-Way RouteModeSelector (Straight / Curvy / Supercurvy) with Terai restriction support.
- * 3. Tactical MapControls (Compass, Pitch, Recenter, Layers, Zoom).
- * 4. TelemetryHUD and in-ride Start/End navigation controls.
- * 5. Permanent, unobstructed OpenStreetMap attribution.
+ * 3. Tactical MapControls (Compass, Pitch, Follow, Recenter, Layers, Zoom).
+ * 4. Truthful TelemetryHUD supporting all 4 GPS states (Locked, Acquiring, Stale, Lost).
+ * 5. Local Ride Mode lifecycle (idle ➔ active_fixture ➔ ended).
+ * 6. Independent Map Freshness & Coverage (fresh, stale, partial, unavailable, error).
+ * 7. Permanent, unobstructed OpenStreetMap attribution.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { MapSurface } from '../components/map/MapSurface';
 import { RouteLayer } from '../components/map/RouteLayer';
@@ -24,8 +26,9 @@ import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
-import { MapRenderInput } from '../domain/map';
+import { MapBaseState, MapCoverage, MapRenderInput } from '../domain/map';
 import { RouteLayerInput, MapMarker } from '../domain/mapOverlay';
+import { RideModeState } from '../domain/telemetryPresentation';
 import {
   curvyRouteTraceFixture,
   supercurvyRouteTraceFixture,
@@ -36,18 +39,41 @@ import {
 } from '../fixtures/routeOverlays.fixture';
 import { primitive } from '../design/tokens';
 
-export const RideHomeScreen: React.FC = () => {
+export interface RideHomeScreenProps {
+  mapBaseStateOverride?: MapBaseState;
+  mapCoverageOverride?: MapCoverage;
+}
+
+export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
+  mapBaseStateOverride,
+  mapCoverageOverride,
+}) => {
   const { colors } = useTheme();
   const { activeRoute, availableRoutes, setActiveRoute, connectionState } = useAppState();
 
-  // Local navigation & fixture map controls state (R8)
-  const [isNavigating, setIsNavigating] = useState(false);
+  // Local Ride Mode state (R9: idle ➔ active_fixture ➔ ended)
+  const [rideMode, setRideMode] = useState<RideModeState>('idle');
+
+  // Local fixture camera and map controls state (R8/R9)
   const [bearingDegrees, setBearingDegrees] = useState(0);
   const [pitchDegrees, setPitchDegrees] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(12.5);
+  const [isFollowRequested, setIsFollowRequested] = useState(false);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
   const [showHazardsLayer, setShowHazardsLayer] = useState(true);
   const [showTopographyLayer, setShowTopographyLayer] = useState(true);
+
+  const isGpsLocked = connectionState.gps.lockState === 'locked';
+  const isGpsStale = connectionState.gps.lockState === 'stale';
+
+  // [P1] Follow eligibility: Disarm active follow if GPS loses lock
+  const effectiveFollowActive = isFollowRequested && isGpsLocked;
+
+  useEffect(() => {
+    if (!isGpsLocked && isFollowRequested) {
+      setIsFollowRequested(false);
+    }
+  }, [isGpsLocked, isFollowRequested]);
 
   const handleSelectMode = (mode: RouteMode) => {
     const found = availableRoutes.find((r) => r.profile === mode);
@@ -56,10 +82,29 @@ export const RideHomeScreen: React.FC = () => {
 
   const topHazard = activeRoute.hazards[0];
 
+  // Ride Mode lifecycle transition
+  const handleToggleRideMode = () => {
+    if (rideMode === 'idle') {
+      setRideMode('active_fixture');
+      setIsFollowRequested(isGpsLocked);
+    } else if (rideMode === 'active_fixture') {
+      setRideMode('ended');
+      setIsFollowRequested(false);
+    } else {
+      setRideMode('idle');
+    }
+  };
+
   // Map control callbacks
   const handleResetCompass = () => setBearingDegrees(0);
   const handleTogglePitch = () => setPitchDegrees((prev) => (prev === 0 ? 60 : 0));
+  const handleToggleFollow = () => {
+    if (isGpsLocked) {
+      setIsFollowRequested((prev) => !prev);
+    }
+  };
   const handleRecenter = () => {
+    setIsFollowRequested(false);
     setBearingDegrees(0);
     setPitchDegrees(0);
     setZoomLevel(12.5);
@@ -92,32 +137,58 @@ export const RideHomeScreen: React.FC = () => {
     return list;
   }, [activeRouteTrace, showHazardsLayer]);
 
-  // Filter markers based on layers toggle
+  // Markers layer: Origin, Destination, Waypoint, Hazard + Rider Marker (when locked or stale)
   const visibleMarkers: MapMarker[] = useMemo(() => {
-    if (showHazardsLayer) {
-      return nepalMapMarkersFixture;
-    }
-    return nepalMapMarkersFixture.filter((m) => m.kind !== 'hazard');
-  }, [showHazardsLayer]);
+    const list: MapMarker[] = nepalMapMarkersFixture.filter((m) =>
+      showHazardsLayer ? true : m.kind !== 'hazard'
+    );
 
-  // Derive MapRenderInput dynamically from active route and connection state
+    // Add rider position marker ONLY when GPS is locked or stale
+    if (isGpsLocked || isGpsStale) {
+      list.push({
+        id: 'marker-rider-self',
+        kind: 'rider',
+        position: { x: 38, y: 58 }, // Mid-route fixture position
+        label: isGpsStale ? 'Last Known Position' : 'You (तपाईं)',
+        labelNepali: isGpsStale ? 'पछिल्लो ज्ञात स्थान' : 'तपाईं',
+        description: `Heading ${connectionState.gps.headingDeg}° · ${connectionState.gps.altitudeMeters}m ASL`,
+        headingDeg: connectionState.gps.headingDeg,
+        isStale: isGpsStale,
+      });
+    }
+
+    return list;
+  }, [showHazardsLayer, isGpsLocked, isGpsStale, connectionState.gps]);
+
+  // [P1] Derive MapRenderInput with independent map baseState and coverage
   const mapRenderInput: MapRenderInput = useMemo(() => {
     const isOffline = connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
-    return {
-      camera: {
-        center: {
+    const cameraCenter = effectiveFollowActive
+      ? {
+          latitude: connectionState.gps.latitude,
+          longitude: connectionState.gps.longitude,
+        }
+      : {
           latitude: activeRoute.origin.coordinates[1],
           longitude: activeRoute.origin.coordinates[0],
-        },
+        };
+
+    const effectiveBaseState: MapBaseState =
+      mapBaseStateOverride || (connectionState.mode === 'deadZone' ? 'stale' : 'fresh');
+
+    const effectiveCoverage: MapCoverage =
+      mapCoverageOverride || { isCovered: true };
+
+    return {
+      camera: {
+        center: cameraCenter,
         zoom: zoomLevel,
-        bearingDegrees,
-        pitchDegrees: isNavigating ? 35 : pitchDegrees,
+        bearingDegrees: effectiveFollowActive ? connectionState.gps.headingDeg : bearingDegrees,
+        pitchDegrees: rideMode === 'active_fixture' ? 35 : pitchDegrees,
       },
       networkPolicy: isOffline ? 'cache_only' : 'online',
-      baseState: 'fresh',
-      coverage: {
-        isCovered: true,
-      },
+      baseState: effectiveBaseState,
+      coverage: effectiveCoverage,
       provenance: {
         source: 'OpenStreetMap Vector Contours (Synthetic Fixture)',
         sourceVersion: 'OSM-NP-2026.08.15',
@@ -125,11 +196,29 @@ export const RideHomeScreen: React.FC = () => {
         attribution: '© OpenStreetMap contributors',
       },
     };
-  }, [activeRoute, connectionState, zoomLevel, bearingDegrees, pitchDegrees, isNavigating]);
+  }, [
+    activeRoute,
+    connectionState,
+    zoomLevel,
+    bearingDegrees,
+    pitchDegrees,
+    rideMode,
+    effectiveFollowActive,
+    mapBaseStateOverride,
+    mapCoverageOverride,
+  ]);
+
+  // [P1] Preserve valid 0 km/h observed speed; never fabricate 68 km/h
+  const liveSpeedKmh =
+    rideMode === 'active_fixture' && isGpsLocked
+      ? typeof connectionState.gps.speedKmh === 'number'
+        ? connectionState.gps.speedKmh
+        : undefined
+      : undefined;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Visual Topographic MapSurface with Overlays (R7/R8) */}
+      {/* Visual Topographic MapSurface with Overlays (R7/R8/R9) */}
       <MapSurface
         input={mapRenderInput}
         showTopography={showTopographyLayer}
@@ -139,12 +228,15 @@ export const RideHomeScreen: React.FC = () => {
         <MarkerLayer markers={visibleMarkers} />
       </MapSurface>
 
-      {/* Floating Tactical Map Controls (Compass, Pitch, Recenter, Layers, Zoom) */}
+      {/* Floating Tactical Map Controls (Compass, Pitch, Follow, Recenter, Layers, Zoom) */}
       <MapControls
         bearingDegrees={bearingDegrees}
         pitchDegrees={pitchDegrees}
+        isFollowActive={effectiveFollowActive}
+        isFollowDisabled={!isGpsLocked}
         onResetCompass={handleResetCompass}
         onTogglePitch={handleTogglePitch}
+        onToggleFollow={handleToggleFollow}
         onRecenter={handleRecenter}
         onOpenLayers={() => setIsLayersOpen(true)}
         onZoomIn={handleZoomIn}
@@ -175,11 +267,25 @@ export const RideHomeScreen: React.FC = () => {
       {/* Bottom Tactical Floating Console */}
       <View style={styles.bottomConsole}>
         <TelemetryHUD
-          speedKmh={isNavigating ? 68 : 0}
+          speedKmh={liveSpeedKmh}
           altitudeMeters={connectionState.gps.altitudeMeters}
-          bearingDeg={bearingDegrees || connectionState.gps.headingDeg}
-          gpsStatus={connectionState.gps.lockState === 'locked' ? 'locked' : connectionState.gps.lockState === 'acquiring' ? 'acquiring' : 'lost'}
-          networkStatus={connectionState.mode === 'online' ? 'online' : connectionState.mode === 'meshOnly' ? 'mesh' : 'offline'}
+          bearingDeg={connectionState.gps.headingDeg}
+          gpsStatus={connectionState.gps.lockState}
+          networkStatus={
+            connectionState.mode === 'online'
+              ? 'online'
+              : connectionState.mode === 'meshOnly'
+              ? 'mesh'
+              : 'offline'
+          }
+          sourceLabel={
+            isGpsStale
+              ? 'Last Known Fix (3m ago · ±25m)'
+              : isGpsLocked
+              ? 'Local GPS Fix (±3.5m)'
+              : undefined
+          }
+          observationAgeSeconds={isGpsStale ? 180 : 0}
           style={styles.hudOverlay}
         />
 
@@ -198,9 +304,21 @@ export const RideHomeScreen: React.FC = () => {
 
         <View style={styles.actionRow}>
           <Button
-            label={isNavigating ? 'END RIDE' : 'START RIDE (राइड सुरु)'}
-            onPress={() => setIsNavigating(!isNavigating)}
-            variant={isNavigating ? 'danger' : 'primary'}
+            label={
+              rideMode === 'active_fixture'
+                ? 'END RIDE (राइड समाप्त)'
+                : rideMode === 'ended'
+                ? 'RIDE ENDED · RESET (सम्पन्न)'
+                : 'START RIDE (राइड सुरु)'
+            }
+            onPress={handleToggleRideMode}
+            variant={
+              rideMode === 'active_fixture'
+                ? 'danger'
+                : rideMode === 'ended'
+                ? 'secondary'
+                : 'primary'
+            }
             inRide
             style={styles.startBtn}
           />

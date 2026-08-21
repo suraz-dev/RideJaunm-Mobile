@@ -58,6 +58,17 @@ export const connectionOnlineSnapshot: ConnectionStateSnapshot = {
   userFacingNoticeNepali: '४जी इन्टरनेट जडान · प्रत्यक्ष क्लाउड सक्रिय',
 };
 
+export const connectionAcquiringSnapshot: ConnectionStateSnapshot = {
+  mode: 'online',
+  cellularSignalBars: 3,
+  meshPeersCount: 0,
+  activeMeshPeers: [],
+  gps: gpsAcquiringFixture,
+  offlineMapCached: true,
+  userFacingNotice: 'Acquiring GPS Satellites...',
+  userFacingNoticeNepali: 'जीपीएस खोज्दै...',
+};
+
 export const connectionMeshOnlySnapshot: ConnectionStateSnapshot = {
   mode: 'meshOnly',
   cellularSignalBars: 0,
@@ -80,4 +91,15 @@ export const connectionDeadZoneSnapshot: ConnectionStateSnapshot = {
   offlineMapCached: true,
   userFacingNotice: 'Dead Zone · Pure Offline Vector Cache Operating',
   userFacingNoticeNepali: 'पूर्ण अफलाइन · भण्डारण गरिएको नक्सा प्रयोग भइरहेको छ',
+};
+
+export const connectionLostGpsSnapshot: ConnectionStateSnapshot = {
+  mode: 'deadZone',
+  cellularSignalBars: 0,
+  meshPeersCount: 0,
+  activeMeshPeers: [],
+  gps: gpsLostFixture,
+  offlineMapCached: false,
+  userFacingNotice: 'GPS Signal Lost · Dead Reckoning Unavailable',
+  userFacingNoticeNepali: 'जीपीएस सम्पर्क टुट्यो',
 };

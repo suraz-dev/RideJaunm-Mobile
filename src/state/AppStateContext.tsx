@@ -1,26 +1,14 @@
 /**
  * ============================================================================
- * GLOBAL APP STATE CONTEXT & PERSISTENCE ENGINE (R6-2, RC-2)
+ * GLOBAL APP STATE CONTEXT & PERSISTENCE ENGINE (R6-2, RC-2, R9)
  * ============================================================================
  *
- * WHY THIS EXISTS:
- * This React Context acts as the central brain of the RideJaunm mobile app.
- * It coordinates:
- * 1. Active route candidates & routing personality modes (Straight / Curvy / Supercurvy).
- * 2. Connection transport snapshots (Online / Cellular Degraded / Mesh Only / Dead Zone).
- * 3. Offline map regions downloaded to the device.
+ * Central brain of the RideJaunm mobile app. Coordinates:
+ * 1. Active route candidates & routing personality modes.
+ * 2. Connection transport & GPS telemetry snapshots.
+ * 3. Offline map regions downloaded to device.
  * 4. Offline outbox queue synchronization.
  * 5. Emergency SOS safety incident observation states.
- *
- * RESTART RECOVERY LIFECYCLE:
- * When the app boots (or reboots after being closed in the background), the
- * `hydrate()` effect executes. It reads each persisted entity from `LocalStore`
- * and restores the user's active route, connectivity profile, and pending outbox items.
- *
- * FAULT VISIBILITY FOR EVERY HYDRATED KEY (RC-2):
- * If ANY stored key (route, connection, offline regions, safety observation, or outbox)
- * is corrupted or fails to read, `AppStateContext` surfaces a descriptive non-sensitive
- * warning in `storageFaults` and preserves safe defaults without crashing.
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -56,62 +44,40 @@ const STORAGE_KEYS = {
 
 /** Shape of the values and dispatch actions exposed by the context */
 interface AppStateContextValue {
-  /** True once all persistent data has finished loading from disk */
   isHydrated: boolean;
-
-  /** Currently active navigation route candidate */
   activeRoute: RouteCandidate;
-
-  /** List of alternative candidate routes available for the current trip */
   availableRoutes: RouteCandidate[];
-
-  /** Change the active route and persist the selection to disk */
   setActiveRoute: (route: RouteCandidate) => Promise<void>;
-
-  /** Current connection snapshot (mode, cellular bars, GPS telemetry, mesh peers) */
   connectionState: ConnectionStateSnapshot;
-
-  /** Manually toggle connection simulation (e.g. for testing offline dead zones) */
   setConnectionMode: (mode: 'online' | 'meshOnly' | 'deadZone') => Promise<void>;
-
-  /** List of offline map packs and their download/storage lifecycle states */
   offlineRegions: OfflineRegion[];
-
-  /** Update offline regions state array and persist to disk */
   setOfflineRegionsState: (regions: OfflineRegion[]) => Promise<void>;
-
-  /** Number of pending outbox operations waiting to be synced */
   pendingOperationsCount: number;
-
-  /** Add an offline action (hazard report, feed post) to the persistent outbox */
   enqueueOperation: (op: QueuedOperation) => Promise<void>;
-
-  /** Active SOS emergency snapshot if armed on this device */
   activeSosSnapshot?: SafetyIncidentSnapshot;
-
-  /** Update or cancel active emergency observation */
   setSosSnapshot: (snapshot?: SafetyIncidentSnapshot) => Promise<void>;
-
-  /** Wipe all user cache and outbox data (e.g. on account reset) */
   resetAccountData: () => Promise<void>;
-
-  /** Primary warning string if any storage key experienced corruption during hydration */
   storageFault?: string;
-
-  /** Exhaustive list of all storage faults surfaced during hydration (RC-2) */
   storageFaults: string[];
 }
 
 const AppStateContext = createContext<AppStateContextValue | undefined>(undefined);
 
-export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStore }> = ({
+export interface AppStateProviderProps {
+  children: ReactNode;
+  store?: LocalStore;
+  initialConnectionState?: ConnectionStateSnapshot;
+}
+
+export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children,
   store = localStore,
+  initialConnectionState = connectionOnlineSnapshot,
 }) => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeRoute, setActiveRouteState] = useState<RouteCandidate>(kathmanduToPokharaCurvy);
   const [connectionState, setConnectionState] =
-    useState<ConnectionStateSnapshot>(connectionOnlineSnapshot);
+    useState<ConnectionStateSnapshot>(initialConnectionState);
   const [offlineRegions, setOfflineRegions] =
     useState<OfflineRegion[]>(allOfflineRegionFixtures);
   const [pendingOps, setPendingOps] = useState<QueuedOperation[]>([]);
@@ -122,9 +88,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
 
   /**
    * Hydration Effect:
-   * Runs once when the component mounts. Restores saved route, connection mode,
-   * offline regions, safety observations, and pending outbox operations from local disk.
-   * Collects and surfaces faults for every key class (RC-2).
+   * Restores saved route, connection mode, offline regions, safety observations,
+   * and pending outbox operations from local disk.
    */
   useEffect(() => {
     let isMounted = true;
@@ -169,7 +134,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
         detectedFaults.push(`safety:${safetyRes.status}`);
       }
 
-      // 5. Hydrate Outbox Queue & Detect Outbox Faults (RC-1 & RC-2)
+      // 5. Hydrate Outbox Queue & Detect Outbox Faults
       const outboxRes = await outboxRepo.loadQueueResult();
       if (outboxRes.status === 'found' && isMounted) {
         const pending = outboxRes.data.filter((op) => op.state === 'queued' || op.state === 'sending');
@@ -283,7 +248,6 @@ export const AppStateProvider: React.FC<{ children: ReactNode; store?: LocalStor
   );
 };
 
-/** Hook to consume the global app state context safely */
 export const useAppState = (): AppStateContextValue => {
   const context = useContext(AppStateContext);
   if (!context) {

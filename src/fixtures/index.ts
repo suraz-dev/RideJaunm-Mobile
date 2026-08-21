@@ -6,3 +6,4 @@ export * from './safety.fixture';
 export * from './locale.fixture';
 export * from './map.fixture';
 export * from './routeOverlays.fixture';
+export * from './telemetryPresentation.fixture';
