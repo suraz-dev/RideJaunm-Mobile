@@ -36,13 +36,21 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
   showTopography,
   onToggleTopography,
 }) => {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
+  const isDayGlare = mode === 'dayGlare';
 
   if (!visible) return null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+      <TouchableOpacity
+        style={[
+          styles.modalOverlay,
+          { backgroundColor: isDayGlare ? colors.mapGlass.borderColor : colors.mapGlass.backgroundColor },
+        ]}
+        activeOpacity={1}
+        onPress={onClose}
+      >
         <View
           style={[styles.sheetContent, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
           onStartShouldSetResponder={() => true}
@@ -97,9 +105,9 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
           </View>
 
           {/* Layer Item 3: Heli Landing Zones (Future Feature Disclosure) */}
-          <View style={[styles.layerItem, { borderBottomColor: colors.borderSubtle, opacity: 0.6 }]}>
+          <View style={[styles.layerItem, { borderBottomColor: colors.borderSubtle }]}>
             <View style={styles.layerInfo}>
-              <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
+              <Text variant="bodyLarge" style={{ color: colors.textSubtle, fontWeight: '600' }}>
                 Emergency Heli Landing Zones (LZ)
               </Text>
               <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
@@ -125,7 +133,6 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   sheetContent: {

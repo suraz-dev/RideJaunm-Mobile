@@ -5,7 +5,7 @@
  *
  * Coordinates:
  * 1. Topographic MapSurface with synthetic route and marker overlays.
- * 2. 3-Way RouteModeSelector (Straight / Curvy / Supercurvy).
+ * 2. 3-Way RouteModeSelector (Straight / Curvy / Supercurvy) with Terai restriction support.
  * 3. Tactical MapControls (Compass, Pitch, Recenter, Layers, Zoom).
  * 4. TelemetryHUD and in-ride Start/End navigation controls.
  * 5. Permanent, unobstructed OpenStreetMap attribution.
@@ -130,8 +130,12 @@ export const RideHomeScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Visual Topographic MapSurface with Overlays (R7/R8) */}
-      <MapSurface input={mapRenderInput} style={styles.mapArea}>
-        {showTopographyLayer && <RouteLayer routes={visibleRoutes} />}
+      <MapSurface
+        input={mapRenderInput}
+        showTopography={showTopographyLayer}
+        style={styles.mapArea}
+      >
+        <RouteLayer routes={visibleRoutes} />
         <MarkerLayer markers={visibleMarkers} />
       </MapSurface>
 
@@ -183,6 +187,12 @@ export const RideHomeScreen: React.FC = () => {
           <RouteModeSelector
             selectedMode={activeRoute.profile}
             onSelectMode={handleSelectMode}
+            disabledModes={activeRoute.isSupercurvyRestrictedInTerai ? ['supercurvy'] : []}
+            disabledReason={
+              activeRoute.isSupercurvyRestrictedInTerai
+                ? 'Supercurvy disabled: Terai flat corridor has no mountain bends'
+                : undefined
+            }
           />
         </View>
 

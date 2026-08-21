@@ -33,12 +33,19 @@ import { primitive } from '../../design/tokens';
 
 export interface MapSurfaceProps {
   input: MapRenderInput;
+  showTopography?: boolean;
   onRetry?: () => void;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 }
 
-export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style, children }) => {
+export const MapSurface: React.FC<MapSurfaceProps> = ({
+  input,
+  showTopography = true,
+  onRetry,
+  style,
+  children,
+}) => {
   const { mode, colors } = useTheme();
   const { camera, baseState, networkPolicy, coverage, provenance } = input;
 
@@ -94,28 +101,32 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style, c
           {/* Base Grid Background */}
           <Rect width="100%" height="100%" fill="url(#gridPattern)" />
 
-          {/* Topographic Contour Lines Simulation */}
-          <Path
-            d="M -20 180 C 80 120, 180 240, 280 160 C 340 100, 420 180, 500 140"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
-          <Path
-            d="M -20 280 C 60 220, 160 340, 260 260 C 360 180, 440 260, 520 220"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
-          <Path
-            d="M -20 380 C 90 320, 190 440, 290 360 C 370 300, 450 380, 520 340"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
+          {/* Topographic Contour Lines Simulation (Controlled by showTopography prop) */}
+          {showTopography && (
+            <>
+              <Path
+                d="M -20 180 C 80 120, 180 240, 280 160 C 340 100, 420 180, 500 140"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+              <Path
+                d="M -20 280 C 60 220, 160 340, 260 260 C 360 180, 440 260, 520 220"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+              <Path
+                d="M -20 380 C 90 320, 190 440, 290 360 C 370 300, 450 380, 520 340"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+            </>
+          )}
 
           {/* Center Map Crosshair Marker */}
           <Circle cx="50%" cy="48%" r="4" fill={centerCrosshairColor} />

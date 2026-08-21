@@ -8,7 +8,7 @@
  * layers sheet, and zoom control on the map surface.
  *
  * ACCESSIBILITY & TOUCH TARGET INVARIANTS:
- * 1. Every button has a minimum touch target of 48 dp (primitive.size.targetMin).
+ * 1. EVERY button has a minimum touch target of 48 dp (primitive.size.targetMin).
  * 2. High-contrast border and background derived from design tokens.
  * 3. Does not obscure OpenStreetMap attribution at bottom-left.
  */
@@ -40,8 +40,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
   onZoomIn,
   onZoomOut,
 }) => {
-  const { colors, mode } = useTheme();
-  const isDayGlare = mode === 'dayGlare';
+  const { colors } = useTheme();
 
   const isPitchActive = pitchDegrees > 0;
   const isCompassRotated = bearingDegrees !== 0;
@@ -128,7 +127,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
         </Text>
       </TouchableOpacity>
 
-      {/* 5. Zoom In / Zoom Out Group */}
+      {/* 5. Zoom In / Zoom Out Group (Each meeting 48dp targetMin) */}
       <View style={[styles.zoomGroup, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <TouchableOpacity
           style={styles.zoomHalfBtn}
@@ -190,7 +189,7 @@ const styles = StyleSheet.create({
   },
   zoomHalfBtn: {
     width: primitive.size.targetMin,
-    height: 38,
+    height: primitive.size.targetMin, // Explicit 48dp minimum touch target
     justifyContent: 'center',
     alignItems: 'center',
   },
