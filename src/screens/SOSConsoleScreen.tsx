@@ -1,124 +1,196 @@
+/**
+ * ============================================================================
+ * SOS CONSOLE & SAFETY CAPABILITY GATE SCREEN (R15)
+ * ============================================================================
+ *
+ * Coordinates:
+ * 1. Presentational safety state machine (ready -> cancel_window -> active_preview -> stood_down_preview).
+ * 2. Limitation banner before controls.
+ * 3. Deliberate 3-second hold to arm using 88dp SOSButton (early release safely aborts).
+ * 4. 10-Second simulated cancel window with explicit "SIMULATED SOS PREVIEW — no alert was sent" copy.
+ * 5. Full-screen active emergency simulation utilizing SOS Red (#FF1F3D) token exclusively.
+ * 6. Deliberate 3-second hold to Stand Down with confirmation copy.
+ * 7. Zero storage, AppState, outbox, network, or phone dialing mutations.
+ * 8. Full theme compliance across Night, Day Glare, Dusk, Blackout.
+ */
+
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
-import { Button } from '../components/primitives/Button';
 import { SOSButton } from '../components/primitives/SOSButton';
+import { SOSLimitationBanner } from '../components/sos/SOSLimitationBanner';
+import { SafetyCapabilityMatrix } from '../components/sos/SafetyCapabilityMatrix';
+import { SOSCancelWindowModal } from '../components/sos/SOSCancelWindowModal';
+import { SOSActiveEmergencyView } from '../components/sos/SOSActiveEmergencyView';
+import { ManualEmergencyInfoCard } from '../components/sos/ManualEmergencyInfoCard';
 import { useTheme } from '../design/ThemeProvider';
+import { useAppState } from '../state/AppStateContext';
 import { primitive, safety } from '../design/tokens';
+import {
+  FixtureSafetyConsoleState,
+  FixtureSafetyCapabilitySnapshot,
+} from '../domain/sosConsole';
+import {
+  defaultSafetyCapabilitySnapshot,
+  deadZoneSafetyCapabilitySnapshot,
+} from '../fixtures/sosConsole.fixture';
 import * as Haptics from 'expo-haptics';
 
 export const SOSConsoleScreen: React.FC = () => {
-  const { colors } = useTheme();
-  const [isArmed, setIsArmed] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  const { colors, mode } = useTheme();
+  const { connectionState } = useAppState();
+  const isDayGlare = mode === 'dayGlare';
 
-  const handleArmSOS = () => {
-    setIsArmed(true);
-    setCountdown(10);
+  const [consoleState, setConsoleState] = useState<FixtureSafetyConsoleState>('ready');
+  const [cancelCountdown, setCancelCountdown] = useState(10);
+
+  const isOffline =
+    connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
+
+  const capabilitySnapshot: FixtureSafetyCapabilitySnapshot = isOffline
+    ? deadZoneSafetyCapabilitySnapshot
+    : defaultSafetyCapabilitySnapshot;
+
+  // Handle completed 3-second hold trigger
+  const handleHoldComplete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setCancelCountdown(10);
+    setConsoleState('cancel_window');
   };
 
+  // Handle cancellation action
   const handleCancelSOS = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setIsArmed(false);
+    setConsoleState('ready');
   };
 
+  // 10-Second cancellation window timer
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-    if (isArmed && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
+    if (consoleState === 'cancel_window') {
+      if (cancelCountdown > 0) {
+        timer = setInterval(() => {
+          setCancelCountdown((prev) => prev - 1);
+        }, 1000);
+      } else {
+        // Countdown reached zero -> advance to simulated active emergency state
+        setConsoleState('active_preview');
+      }
     }
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isArmed, countdown]);
+  }, [consoleState, cancelCountdown]);
+
+  // Full-Screen Active Emergency Preview
+  if (consoleState === 'active_preview' || consoleState === 'stand_down_hold') {
+    return (
+      <SOSActiveEmergencyView
+        evidenceItems={capabilitySnapshot.evidenceItems}
+        onStandDownComplete={() => setConsoleState('stood_down_preview')}
+      />
+    );
+  }
+
+  // Stood Down Confirmation Screen
+  if (consoleState === 'stood_down_preview') {
+    return (
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.content}
+      >
+        <View
+          style={[
+            styles.stoodDownCard,
+            {
+              backgroundColor: isDayGlare ? primitive.color.snow[0] : colors.surface,
+              borderColor: primitive.color.volt[400],
+            },
+          ]}
+        >
+          <Badge label="STOOD DOWN" variant="volt" size="md" />
+          <Text variant="h2" style={{ color: colors.text, marginTop: primitive.spacing[3], textAlign: 'center' }}>
+            Stand-down preview complete — no all-clear was sent.
+          </Text>
+          <Text variant="bodyMedium" muted style={{ textAlign: 'center', marginTop: primitive.spacing[2], marginBottom: primitive.spacing[4] }}>
+            Emergency simulation concluded locally. All systems returned to normal preview state.
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.returnBtn,
+              {
+                backgroundColor: primitive.color.volt[400],
+                borderColor: primitive.color.volt[500],
+              },
+            ]}
+            onPress={() => setConsoleState('ready')}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Return to SOS Console"
+          >
+            <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 13, fontWeight: '700' }}>
+              RETURN TO SOS CONSOLE
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
     >
+      {/* Header */}
       <View style={styles.header}>
-        <Badge label="EMERGENCY SUBSYSTEM (आपतकालीन)" variant="danger" size="md" />
-        <Text variant="h1" style={[styles.title, { color: safety.sos.color }]}>
+        <Badge label="SAFETY REHEARSAL CONSOLE" variant="neutral" size="sm" />
+        <Text variant="h1" style={[styles.title, { color: colors.text }]}>
           Emergency SOS Console
         </Text>
         <Text variant="bodyMedium" muted>
-          Multi-hop relay active. Transmits encrypted coordinates over BLE Mesh and queued SMS if cellular is lost.
+          Rehearses the emergency interaction model locally. No active emergency services dispatch.
         </Text>
       </View>
 
-      {/* Main SOS Hold Trigger */}
-      <View style={styles.triggerContainer}>
-        <SOSButton onArmed={handleArmSOS} />
-        <Text variant="bodySmall" muted style={styles.holdHint}>
-          Deliberate 3s hold required to arm emergency packet
+      {/* Limitation Banner (Always before trigger) */}
+      <SOSLimitationBanner />
+
+      {/* Main 88dp SOS Hold Trigger (Only emergency element permitted to use SOS Red) */}
+      <View
+        style={[
+          styles.triggerCard,
+          {
+            backgroundColor: isDayGlare ? primitive.color.snow[0] : colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Text variant="h3" style={{ color: colors.text, marginBottom: primitive.spacing[4] }}>
+          Hold to Trigger Simulated SOS
+        </Text>
+
+        <SOSButton onArmed={handleHoldComplete} />
+
+        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: primitive.spacing[4], textAlign: 'center' }}>
+          Deliberate 3s hold required to arm simulated emergency packet
         </Text>
       </View>
 
-      {/* Channel Cascade & Evidence Tracker */}
-      <Text variant="h3" style={styles.sectionHeader}>
-        Channel Cascade Status
-      </Text>
+      {/* 10-Second Cancel Window Modal */}
+      <SOSCancelWindowModal
+        visible={consoleState === 'cancel_window'}
+        countdown={cancelCountdown}
+        onCancel={handleCancelSOS}
+      />
 
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={styles.channelRow}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700' }}>1. Local Device GPS</Text>
-          <Badge label="LOCKED (±4m)" variant="volt" size="sm" />
-        </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      {/* Capability & Evidence Matrix */}
+      <SafetyCapabilityMatrix snapshot={capabilitySnapshot} />
 
-        <View style={styles.channelRow}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700' }}>2. BLE Multi-Hop Mesh</Text>
-          <Badge label="3 SQUAD PEERS" variant="supercurvy" size="sm" />
-        </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.channelRow}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700' }}>3. Nepal Cellular (NTC/Ncell)</Text>
-          <Badge label="DEAD ZONE (STANDBY)" variant="warning" size="sm" />
-        </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.channelRow}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700' }}>4. SMS Breadcrumb Relay</Text>
-          <Badge label="QUEUED" variant="neutral" size="sm" />
-        </View>
-      </View>
-
-      {/* Nepal Emergency Helplines */}
-      <Text variant="h3" style={styles.sectionHeader}>
-        Direct Nepal Emergency Helplines
-      </Text>
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text variant="bodyMedium" style={{ color: colors.text }}>🚨 Nepal Police: 100</Text>
-        <Text variant="bodyMedium" style={{ color: colors.text, marginTop: 6 }}>🚑 Nepal Red Cross Ambulance: 102</Text>
-        <Text variant="bodyMedium" style={{ color: colors.text, marginTop: 6 }}>🏔️ Tourist Police Nepal: 1144</Text>
-      </View>
-
-      {/* Active Cancellation Modal */}
-      <Modal visible={isArmed} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { backgroundColor: colors.surfaceElevated, borderColor: safety.sos.color }]}>
-            <Badge label="SOS ARMED · BROADCASTING" variant="danger" size="md" />
-            <Text variant="telemetryHero" style={{ color: safety.sos.color, marginVertical: 12 }}>
-              00:0{countdown}
-            </Text>
-            <Text variant="bodyMedium" style={{ textAlign: 'center', marginBottom: 20 }}>
-              Broadcasting distress packet to nearby squad mesh peers and queued Nepal emergency lines.
-            </Text>
-            <Button
-              label="CANCEL SOS (रद्द गर्नुहोस्)"
-              onPress={handleCancelSOS}
-              variant="danger"
-              inRide
-              style={{ width: '100%' }}
-            />
-          </View>
-        </View>
-      </Modal>
+      {/* Disabled Manual Help Info Card */}
+      <ManualEmergencyInfoCard />
     </ScrollView>
   );
 };
@@ -128,56 +200,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: primitive.spacing[5],
-    paddingTop: 60,
-    paddingBottom: 100,
+    padding: primitive.spacing[4],
+    paddingTop: 56,
+    paddingBottom: 120,
   },
   header: {
-    marginBottom: primitive.spacing[5],
+    marginBottom: primitive.spacing[4],
   },
   title: {
     marginTop: primitive.spacing[2],
     marginBottom: primitive.spacing[1],
   },
-  triggerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: primitive.spacing[5],
-  },
-  holdHint: {
-    marginTop: primitive.spacing[3],
-  },
-  sectionHeader: {
-    marginTop: primitive.spacing[4],
-    marginBottom: primitive.spacing[3],
-  },
-  card: {
+  triggerCard: {
     borderRadius: primitive.radius.lg,
-    padding: primitive.spacing[4],
+    padding: primitive.spacing[5],
+    alignItems: 'center',
+    marginBottom: primitive.spacing[4],
     borderWidth: 1,
   },
-  channelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  stoodDownCard: {
+    borderRadius: primitive.radius.xl,
+    padding: primitive.spacing[6],
     alignItems: 'center',
-    paddingVertical: 4,
+    marginTop: primitive.spacing[6],
+    borderWidth: 2,
   },
-  divider: {
-    height: 1,
-    marginVertical: primitive.spacing[2],
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(5, 8, 7, 0.92)',
+  returnBtn: {
+    minHeight: 48,
+    paddingHorizontal: primitive.spacing[5],
+    borderRadius: primitive.radius.md,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: primitive.spacing[5],
-  },
-  modalBox: {
-    width: '100%',
-    borderRadius: primitive.radius.xl,
-    padding: primitive.spacing[5],
-    alignItems: 'center',
-    borderWidth: 2,
   },
 });

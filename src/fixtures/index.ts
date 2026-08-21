@@ -11,3 +11,4 @@ export * from './tripPlanner.fixture';
 export * from './tripReadiness.fixture';
 export * from './squadCommunity.fixture';
 export * from './profileSettings.fixture';
+export * from './sosConsole.fixture';
