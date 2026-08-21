@@ -41,7 +41,7 @@ export const RideHomeScreen: React.FC = () => {
         isCovered: true,
       },
       provenance: {
-        source: 'OpenStreetMap Vector Contours v4.2',
+        source: 'OpenStreetMap Vector Contours (Synthetic Fixture)',
         sourceVersion: 'OSM-NP-2026.08.15',
         licence: 'Open Database Licence (ODbL) 1.0',
         attribution: '© OpenStreetMap contributors',

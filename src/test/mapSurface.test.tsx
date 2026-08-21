@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MapSurface } from '../components/map/MapSurface';
 import { ThemeProvider } from '../design/ThemeProvider';
+import { ThemeMode } from '../design/tokens';
 import {
   mapFreshKathmanduFixture,
   mapStaleMustangFixture,
@@ -21,10 +22,11 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
     );
 
     expect(view.getByText(/N 27.6775° · E 85.3486°/)).toBeTruthy();
+    expect(view.getByText(/Online Policy \(Simulated\)/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
-  test('renders stale map state with disclosure banner and cache provenance', async () => {
+  test('renders stale map fixture with disclosure banner and cache provenance', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
         <MapSurface input={mapStaleMustangFixture} />
@@ -33,7 +35,7 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
 
     expect(view.getByText('⚠️ STALE MAP CACHE')).toBeTruthy();
     expect(view.getByText(/OSM-NP-2026.05.10/)).toBeTruthy();
-    expect(view.getByText(/Local vector cache expired/)).toBeTruthy();
+    expect(view.getByText(/Simulated stale map fixture/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
@@ -48,19 +50,19 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
     expect(
       view.getByText(/Thorong La Pass & High Camp \(Above 4,800m ASL\)/)
     ).toBeTruthy();
-    expect(view.getByText(/Cached valley base rendered/)).toBeTruthy();
+    expect(view.getByText(/Synthetic base coverage rendered/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
-  test('renders loading state with initializing indicator and message', async () => {
+  test('renders loading state with initializing indicator and truthful synthetic message', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
         <MapSurface input={mapLoadingFixture} />
       </ThemeProvider>
     );
 
-    expect(view.getByText('INITIALIZING VECTOR TILES...')).toBeTruthy();
-    expect(view.getByText(/Loading topographic elevation contours/)).toBeTruthy();
+    expect(view.getByText('INITIALIZING FIXTURE MAP SURFACE...')).toBeTruthy();
+    expect(view.getByText(/Loading synthetic topographic contours/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
@@ -71,9 +73,9 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
       </ThemeProvider>
     );
 
-    expect(view.getByText('OFFLINE SECTOR UNCACHED')).toBeTruthy();
+    expect(view.getByText('SIMULATED UNCACHED SECTOR')).toBeTruthy();
     expect(
-      view.getByText(/No cached map pack found for Upper Dolpa & Shey Phoksundo Corridor/)
+      view.getByText(/Demonstrates unavailable sector state for Upper Dolpa & Shey Phoksundo Corridor/)
     ).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
@@ -88,9 +90,9 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
     );
 
     expect(view.getByText('RENDER FAULT')).toBeTruthy();
-    expect(view.getByText('Unable to Render Vector Mesh')).toBeTruthy();
+    expect(view.getByText('Simulated Render Fault')).toBeTruthy();
 
-    const retryBtn = view.getByText('RETRY VECTOR RENDER');
+    const retryBtn = view.getByText('RETRY FIXTURE RENDER');
     expect(retryBtn).toBeTruthy();
 
     fireEvent.press(retryBtn);
@@ -112,14 +114,18 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
     }
   });
 
-  test('renders high-contrast solid surfaces in Day-Glare sunlight mode', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="dayGlare">
-        <MapSurface input={mapFreshKathmanduFixture} />
-      </ThemeProvider>
-    );
+  test('renders cleanly and without errors across all 4 theme modes (night, dayGlare, dusk, blackout)', async () => {
+    const themes: ThemeMode[] = ['night', 'dayGlare', 'dusk', 'blackout'];
 
-    expect(view.getByText(/N 27.6775° · E 85.3486°/)).toBeTruthy();
-    expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
+    for (const mode of themes) {
+      const view = await render(
+        <ThemeProvider initialMode={mode}>
+          <MapSurface input={mapFreshKathmanduFixture} />
+        </ThemeProvider>
+      );
+
+      expect(view.getByText(/N 27.6775° · E 85.3486°/)).toBeTruthy();
+      expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
+    }
   });
 });

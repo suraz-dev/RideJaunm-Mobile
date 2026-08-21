@@ -4,21 +4,25 @@
  * ============================================================================
  *
  * WHY THIS EXISTS:
- * Provides deterministic map render inputs for unit testing and simulator
- * visual verification across all required base states:
- * - Fresh online vector rendering
- * - Stale offline cache disclosure
- * - Partial mountain pass coverage
- * - Loading tile state
- * - Unavailable offline sector
- * - Render error with retry
- * - Cache-only uncached sector
+ * Provides deterministic, synthetic map render inputs for unit testing
+ * and simulator visual verification across all required base states:
+ * - Fresh synthetic vector terrain rendering
+ * - Stale offline cache simulation
+ * - Partial mountain pass coverage simulation
+ * - Loading fixture state
+ * - Unavailable sector simulation
+ * - Deterministic render error with retry simulation
+ * - Cache-only policy with uncached sector simulation
+ *
+ * SCOPE & TRUTHFULNESS:
+ * All fixtures are purely synthetic test inputs. They make no network calls,
+ * do not import third-party map SDKs, and do not claim live cellular downloading.
  */
 
 import { MapRenderInput } from '../domain/map';
 
 const OSM_PROVENANCE = {
-  source: 'OpenStreetMap Vector Contours v4.2',
+  source: 'OpenStreetMap Vector Contours (Synthetic Fixture)',
   sourceVersion: 'OSM-NP-2026.08.15',
   licence: 'Open Database Licence (ODbL) 1.0',
   attribution: '© OpenStreetMap contributors',
@@ -26,7 +30,7 @@ const OSM_PROVENANCE = {
 };
 
 /**
- * 1. Fresh Online Vector Map (Kathmandu Valley & Koteshwor Corridor)
+ * 1. Fresh Vector Map Fixture (Kathmandu Valley & Koteshwor Corridor)
  */
 export const mapFreshKathmanduFixture: MapRenderInput = {
   camera: {
@@ -44,8 +48,8 @@ export const mapFreshKathmanduFixture: MapRenderInput = {
 };
 
 /**
- * 2. Stale Cache-Only Vector Map (Annapurna / Mustang Circuit)
- * Cached 90 days ago; expired on 2026-08-10.
+ * 2. Stale Cache-Only Vector Map Fixture (Annapurna / Mustang Circuit)
+ * Demonstrates expired synthetic cache state (dated 2026-05-10).
  */
 export const mapStaleMustangFixture: MapRenderInput = {
   camera: {
@@ -62,13 +66,13 @@ export const mapStaleMustangFixture: MapRenderInput = {
   provenance: {
     ...OSM_PROVENANCE,
     sourceVersion: 'OSM-NP-2026.05.10',
-    freshUntil: '2026-08-10T00:00:00Z', // Expired
+    freshUntil: '2026-08-10T00:00:00Z',
   },
 };
 
 /**
- * 3. Partial Coverage Map (Manang Valley with Uncached High Pass)
- * Base valley tiles are available; Thorong La High Pass is missing from local cache.
+ * 3. Partial Coverage Map Fixture (Manang Valley with Uncached High Pass)
+ * Demonstrates synthetic missing sector boundary for Thorong La High Pass.
  */
 export const mapPartialManangFixture: MapRenderInput = {
   camera: {
@@ -93,7 +97,7 @@ export const mapPartialManangFixture: MapRenderInput = {
 };
 
 /**
- * 4. Loading State
+ * 4. Loading State Fixture
  */
 export const mapLoadingFixture: MapRenderInput = {
   camera: {
@@ -111,7 +115,7 @@ export const mapLoadingFixture: MapRenderInput = {
 };
 
 /**
- * 5. Unavailable Sector (Upper Dolpa Dead Zone with No Local Cache)
+ * 5. Unavailable Sector Fixture (Upper Dolpa Corridor Simulation)
  */
 export const mapUnavailableDolpaFixture: MapRenderInput = {
   camera: {
@@ -130,7 +134,7 @@ export const mapUnavailableDolpaFixture: MapRenderInput = {
 };
 
 /**
- * 6. Error State (Storage Fault / Corrupt Vector Tiles)
+ * 6. Deterministic Error State Fixture
  */
 export const mapErrorFixture: MapRenderInput = {
   camera: {
@@ -145,7 +149,7 @@ export const mapErrorFixture: MapRenderInput = {
 };
 
 /**
- * 7. Cache-Only Policy with Uncached Map Sector
+ * 7. Cache-Only Policy with Uncached Map Sector Fixture
  */
 export const mapCacheOnlyUncachedFixture: MapRenderInput = {
   camera: {
