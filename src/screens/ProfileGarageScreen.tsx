@@ -38,7 +38,6 @@ export type ProfileInnerTab = 'profile' | 'garage' | 'history' | 'settings';
 
 export const ProfileGarageScreen: React.FC = () => {
   const { colors, mode } = useTheme();
-  const { resetAccountData } = useAppState();
   const isDayGlare = mode === 'dayGlare';
 
   const [activeTab, setActiveTab] = useState<ProfileInnerTab>('profile');
@@ -168,7 +167,6 @@ export const ProfileGarageScreen: React.FC = () => {
           currentCalendar={calendarSystem}
           onCalendarChange={setCalendarSystem}
           onOpenOfflineManager={() => setShowOfflineManager(true)}
-          onResetAccountData={resetAccountData}
         />
       )}
     </ScrollView>

@@ -239,6 +239,20 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     ).toBeTruthy();
   });
 
+  test('truthfulness & no-persistence: rejects global reset controls in fixture preview', async () => {
+    const view = await render(<ProfileGarageScreen />, { wrapper: createWrapper() });
+
+    // Switch to Settings tab
+    const settingsTab = view.getByLabelText('Select Settings tab (सेटिङ)');
+    await act(async () => {
+      fireEvent.press(settingsTab);
+    });
+
+    // Assert that destructive/global reset button is not rendered in fixture preview
+    expect(view.queryByText(/RESET LOCAL CACHE & OUTBOX/i)).toBeNull();
+    expect(view.queryByLabelText(/Reset local cache and outbox storage/i)).toBeNull();
+  });
+
   test('renders cleanly across all 4 theme modes with Devanagari text', async () => {
     const themes: ThemeMode[] = ['night', 'dayGlare', 'dusk', 'blackout'];
 

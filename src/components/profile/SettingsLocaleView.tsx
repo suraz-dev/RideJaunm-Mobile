@@ -35,7 +35,6 @@ export interface SettingsLocaleViewProps {
   currentCalendar: CalendarSystemPreview;
   onCalendarChange: (cal: CalendarSystemPreview) => void;
   onOpenOfflineManager: () => void;
-  onResetAccountData: () => void;
 }
 
 export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
@@ -44,7 +43,6 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
   currentCalendar,
   onCalendarChange,
   onOpenOfflineManager,
-  onResetAccountData,
 }) => {
   const { mode, setMode, colors } = useTheme();
   const { offlineRegions } = useAppState();
@@ -443,24 +441,6 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
         </View>
       </View>
 
-      {/* 8. Reset Local Storage Button */}
-      <TouchableOpacity
-        style={[
-          styles.resetBtn,
-          {
-            borderColor: colors.borderSubtle,
-          },
-        ]}
-        onPress={onResetAccountData}
-        accessible
-        accessibilityRole="button"
-        accessibilityLabel="Reset local cache and outbox storage"
-      >
-        <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '600' }}>
-          🔄 RESET LOCAL CACHE & OUTBOX
-        </Text>
-      </TouchableOpacity>
-
       {/* Permanent Truth Disclosure */}
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
         <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
@@ -564,14 +544,6 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginVertical: primitive.spacing[3],
-  },
-  resetBtn: {
-    minHeight: 48,
-    borderRadius: primitive.radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: primitive.spacing[4],
   },
   cardFooter: {
     paddingTop: primitive.spacing[3],
