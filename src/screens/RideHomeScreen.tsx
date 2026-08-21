@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text } from '../components/primitives/Text';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { MapSurface } from '../components/map/MapSurface';
 import { TelemetryHUD } from '../components/composites/TelemetryHUD';
 import { RouteModeSelector, RouteMode } from '../components/composites/RouteModeSelector';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
+import { MapRenderInput } from '../domain/map';
 import { primitive } from '../design/tokens';
 
 export const RideHomeScreen: React.FC = () => {
@@ -21,30 +22,48 @@ export const RideHomeScreen: React.FC = () => {
 
   const topHazard = activeRoute.hazards[0];
 
+  // Derive MapRenderInput dynamically from active route and connection state (R7)
+  const mapRenderInput: MapRenderInput = useMemo(() => {
+    const isOffline = connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
+    return {
+      camera: {
+        center: {
+          latitude: activeRoute.origin.coordinates[1],
+          longitude: activeRoute.origin.coordinates[0],
+        },
+        zoom: 12.5,
+        bearingDegrees: connectionState.gps.headingDeg,
+        pitchDegrees: isNavigating ? 35 : 0,
+      },
+      networkPolicy: isOffline ? 'cache_only' : 'online',
+      baseState: 'fresh',
+      coverage: {
+        isCovered: true,
+      },
+      provenance: {
+        source: 'OpenStreetMap Vector Contours v4.2',
+        sourceVersion: 'OSM-NP-2026.08.15',
+        licence: 'Open Database Licence (ODbL) 1.0',
+        attribution: '© OpenStreetMap contributors',
+      },
+    };
+  }, [activeRoute, connectionState, isNavigating]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Simulated Map Surface Area */}
-      <View style={[styles.mapPlaceholder, { backgroundColor: colors.surface }]}>
-        <View style={styles.mapGridLines}>
-          <Text variant="mono" style={{ color: colors.textSubtle, opacity: 0.6 }}>
-            N 27°42'54.2" · E 85°19'30.1" · {connectionState.gps.altitudeMeters}m ASL
-          </Text>
-          <Text variant="bodySmall" style={{ color: primitive.color.volt[400], marginTop: 4 }}>
-            📍 {activeRoute.origin.name} ➔ {activeRoute.destination.name}
-          </Text>
-        </View>
+      {/* Visual Topographic MapSurface (R7) */}
+      <MapSurface input={mapRenderInput} style={styles.mapArea} />
 
-        {/* Floating Top In-Ride Warning */}
-        {topHazard && (
-          <View style={styles.hazardBanner}>
-            <Badge
-              label={`⚠️ ${topHazard.locationName}: ${topHazard.description}`}
-              variant="warning"
-              size="md"
-            />
-          </View>
-        )}
-      </View>
+      {/* Floating Top In-Ride Warning */}
+      {topHazard && (
+        <View style={styles.hazardBanner}>
+          <Badge
+            label={`⚠️ ${topHazard.locationName}: ${topHazard.description}`}
+            variant="warning"
+            size="md"
+          />
+        </View>
+      )}
 
       {/* Bottom Tactical Floating Console */}
       <View style={styles.bottomConsole}>
@@ -82,14 +101,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  mapPlaceholder: {
+  mapArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapGridLines: {
-    padding: primitive.spacing[4],
-    alignItems: 'center',
   },
   hazardBanner: {
     position: 'absolute',
@@ -97,12 +110,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: primitive.spacing[4],
     width: '100%',
     alignItems: 'center',
+    zIndex: 15,
   },
   bottomConsole: {
     position: 'absolute',
     bottom: 16,
     left: 16,
     right: 16,
+    zIndex: 20,
   },
   hudOverlay: {
     marginBottom: primitive.spacing[3],
