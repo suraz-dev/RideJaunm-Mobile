@@ -39,10 +39,10 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
   const holdProgress = useRef(new Animated.Value(0)).current;
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const holdCompletedRef = useRef(false);
+  const isPhysicalTouchRef = useRef(false);
 
   const handlePressIn = () => {
-    holdCompletedRef.current = false;
+    isPhysicalTouchRef.current = true;
     setIsHoldingStandDown(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -53,7 +53,6 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
     }).start();
 
     holdTimer.current = setTimeout(() => {
-      holdCompletedRef.current = true;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStandDownNotice('Stand-down preview complete — no all-clear was sent.');
       completeTimer.current = setTimeout(() => {
@@ -76,8 +75,8 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
   };
 
   const handleAccessibleTrigger = () => {
-    if (holdCompletedRef.current) {
-      holdCompletedRef.current = false;
+    if (isPhysicalTouchRef.current) {
+      isPhysicalTouchRef.current = false;
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

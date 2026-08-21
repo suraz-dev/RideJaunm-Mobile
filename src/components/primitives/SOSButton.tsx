@@ -43,12 +43,12 @@ export const SOSButton: React.FC<SOSButtonProps> = ({
   const progressAnim = useRef(new Animated.Value(0)).current;
   const hapticInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const holdCompletedRef = useRef(false);
+  const isPhysicalTouchRef = useRef(false);
 
   const HOLD_DURATION = safety.sos.holdMs; // 3,000 ms
 
   const handlePressIn = () => {
-    holdCompletedRef.current = false;
+    isPhysicalTouchRef.current = true;
     setIsPressing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -64,7 +64,6 @@ export const SOSButton: React.FC<SOSButtonProps> = ({
     }).start();
 
     holdTimer.current = setTimeout(() => {
-      holdCompletedRef.current = true;
       if (hapticInterval.current) clearInterval(hapticInterval.current);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setIsPressing(false);
@@ -92,9 +91,9 @@ export const SOSButton: React.FC<SOSButtonProps> = ({
   };
 
   const handleAccessibleTrigger = () => {
-    // If this onPress is triggered by the release of a completed physical hold, do not open the modal
-    if (holdCompletedRef.current) {
-      holdCompletedRef.current = false;
+    // If this onPress was fired at the end of a physical press-and-hold (completed or early release), do NOT open modal
+    if (isPhysicalTouchRef.current) {
+      isPhysicalTouchRef.current = false;
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

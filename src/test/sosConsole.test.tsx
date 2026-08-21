@@ -6,7 +6,7 @@
  * Verifies:
  * 1. Limitation banner and capability matrix in Ready state.
  * 2. 3-Second hold trigger advancing to 10-second simulated cancel window.
- * 3. Early release of SOS hold safely aborting without advancing to cancel window.
+ * 3. Early release of SOS hold safely aborts, does NOT open accessible modal, and returns to Ready.
  * 4. Finger release after physical hold does not open accessible confirmation modal.
  * 5. VoiceOver/TalkBack accessible arming via deliberate 2-step confirmation dialog.
  * 6. Cancel action safely aborting without incident dispatch.
@@ -38,6 +38,7 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
   let memoryStore: MemoryLocalStore;
 
   beforeEach(() => {
+    jest.useRealTimers();
     memoryStore = new MemoryLocalStore();
   });
 
@@ -89,12 +90,13 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
     ).toBeTruthy();
   });
 
-  test('early release of SOS hold aborts and safely returns to Ready without cancel window', async () => {
-    jest.useFakeTimers();
+  test('early release of SOS hold aborts, does NOT open accessible modal, and safely returns to Ready without cancel window', async () => {
     const view = await render(<SOSConsoleScreen />, { wrapper: createWrapper() });
 
     const sosButton = view.getByLabelText(/Emergency SOS button/);
     expect(sosButton).toBeTruthy();
+
+    jest.useFakeTimers();
 
     // Start pressing
     await act(async () => {
@@ -106,7 +108,7 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
       jest.advanceTimersByTime(1500);
     });
 
-    // Release early
+    // Release early: fires pressOut and trailing onPress
     await act(async () => {
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
@@ -117,13 +119,20 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
       jest.advanceTimersByTime(3000);
     });
 
-    // Verify cancellation window is NOT opened and screen remains in Ready state
+    // Verify cancellation window is NOT opened
     expect(view.queryByText(/SIMULATED SOS PREVIEW — no alert was sent\./)).toBeNull();
+
+    // Verify accessibility confirmation modal is NOT opened on early release
+    expect(view.queryByText('Arm Simulated Emergency SOS?')).toBeNull();
+
+    // Verify screen remains in Ready state with limitation banner
     expect(
       view.getByText(
         /Safety preview only — this build cannot contact emergency services or your contacts\./
       )
     ).toBeTruthy();
+
+    jest.useRealTimers();
   });
 
   test('VoiceOver/TalkBack accessible arming via deliberate 2-step confirmation modal', async () => {
@@ -151,11 +160,12 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
   });
 
   test('handles 3-second hold to arm and advances to 10-second cancel window without triggering accessible modal on release', async () => {
-    jest.useFakeTimers();
     const view = await render(<SOSConsoleScreen />, { wrapper: createWrapper() });
 
     const sosButton = view.getByLabelText(/Emergency SOS button/);
     expect(sosButton).toBeTruthy();
+
+    jest.useFakeTimers();
 
     // PressIn to start hold
     await act(async () => {
@@ -181,13 +191,17 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     // Verify accessible modal was NOT opened over cancel window
     expect(view.queryByText('Arm Simulated Emergency SOS?')).toBeNull();
+
+    jest.useRealTimers();
   });
 
   test('cancels SOS during cancel window returning to Ready state without dispatch claim', async () => {
-    jest.useFakeTimers();
     const view = await render(<SOSConsoleScreen />, { wrapper: createWrapper() });
 
     const sosButton = view.getByLabelText(/Emergency SOS button/);
+
+    jest.useFakeTimers();
+
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
     });
@@ -211,13 +225,17 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
         /Safety preview only — this build cannot contact emergency services or your contacts\./
       )
     ).toBeTruthy();
+
+    jest.useRealTimers();
   });
 
   test('advances to full-screen Active Emergency preview when cancel countdown reaches 0', async () => {
-    jest.useFakeTimers();
     const view = await render(<SOSConsoleScreen />, { wrapper: createWrapper() });
 
     const sosButton = view.getByLabelText(/Emergency SOS button/);
+
+    jest.useFakeTimers();
+
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
     });
@@ -281,13 +299,17 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
         /Safety preview only — this build cannot contact emergency services or your contacts\./
       )
     ).toBeTruthy();
+
+    jest.useRealTimers();
   });
 
   test('VoiceOver/TalkBack accessible stand-down via deliberate confirmation modal', async () => {
-    jest.useFakeTimers();
     const view = await render(<SOSConsoleScreen />, { wrapper: createWrapper() });
 
     const sosButton = view.getByLabelText(/Emergency SOS button/);
+
+    jest.useFakeTimers();
+
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
     });
@@ -325,6 +347,8 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     // Verify stood down
     expect(view.getByText('Stand-down preview complete — no all-clear was sent.')).toBeTruthy();
+
+    jest.useRealTimers();
   });
 
   test('renders dead-zone evidence snapshot when offline', async () => {
