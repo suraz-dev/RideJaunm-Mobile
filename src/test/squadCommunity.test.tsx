@@ -217,6 +217,11 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       view.getByText('Reaching Naubise check post in 10 mins. Regroup at highway cafe.')
     ).toBeTruthy();
     expect(view.getByText('Copy that lead. Passing through Dharke now.')).toBeTruthy();
+    expect(
+      view.getByText(
+        'Traffic slow near Malekhu. Mesh capability is unverified in this fixture preview.'
+      )
+    ).toBeTruthy();
 
     // Chat Composer "Send Preview"
     const sendBtn = view.getByLabelText('Send chat message preview');
@@ -227,6 +232,21 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     expect(
       view.getByText(/No message was sent, queued, or delivered\./)
     ).toBeTruthy();
+  });
+
+  test('safety truthfulness regression: rejects active mesh relay and live delivery claims', async () => {
+    const view = await render(<SquadFeedScreen />, { wrapper: createWrapper() });
+
+    // Switch to Chat tab
+    const chatTab = view.getByLabelText('Select Chat tab (च्याट)');
+    await act(async () => {
+      fireEvent.press(chatTab);
+    });
+
+    // Explicitly assert that unverified active relay assertions do not appear in transcript text
+    expect(view.queryByText(/Mesh packet relay active/i)).toBeNull();
+    expect(view.queryByText(/message delivered/i)).toBeNull();
+    expect(view.queryByText(/live tracking active/i)).toBeNull();
   });
 
   test('renders offline/mesh banner when in deadZone connection mode', async () => {

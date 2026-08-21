@@ -197,11 +197,11 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     id: 'msg-03',
     author: 'Rabin Thapa',
     authorNepali: 'रबिन थापा',
-    body: 'Traffic slow near Malekhu. Mesh packet relay active.',
+    body: 'Traffic slow near Malekhu. Mesh capability is unverified in this fixture preview.',
     state: 'cached',
     createdAt: '2026-08-15T08:24:00Z',
     isCurrentUser: false,
-    syntheticDisclosure: 'Pre-authored chat message · Simulated mesh relay note',
+    syntheticDisclosure: 'Pre-authored chat message · Mesh capability unverified in fixture preview',
   },
   {
     id: 'msg-04',
