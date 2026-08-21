@@ -36,24 +36,6 @@ import { ThemeMode, safety } from '../design/tokens';
 
 describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
   let memoryStore: MemoryLocalStore;
-  let originalConsoleError: typeof console.error;
-
-  beforeAll(() => {
-    originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
-      if (
-        typeof args[0] === 'string' &&
-        args[0].includes('You seem to have overlapping act() calls')
-      ) {
-        return;
-      }
-      originalConsoleError(...args);
-    };
-  });
-
-  afterAll(() => {
-    console.error = originalConsoleError;
-  });
 
   beforeEach(() => {
     jest.useRealTimers();
@@ -116,25 +98,12 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     jest.useFakeTimers();
 
-    // Start pressing
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
-    });
-
-    // Advance only 1.5 seconds (early release before 3.0s threshold)
-    await act(async () => {
-      jest.advanceTimersByTime(1500);
-    });
-
-    // Release early: fires pressOut and trailing onPress
-    await act(async () => {
+      jest.advanceTimersByTime(1500); // Early release before 3.0s threshold
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
-    });
-
-    // Advance beyond 3.0s to prove no deferred timer triggers
-    await act(async () => {
-      jest.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(3000); // Prove no deferred timers arm
     });
 
     // Verify cancellation window is NOT opened
@@ -185,18 +154,9 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     jest.useFakeTimers();
 
-    // PressIn to start hold
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
-    });
-
-    // Advance 3 seconds for hold completion
-    await act(async () => {
       jest.advanceTimersByTime(safety.sos.holdMs);
-    });
-
-    // Physical release of finger (pressOut + onPress)
-    await act(async () => {
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
     });
@@ -222,11 +182,7 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
-    });
-    await act(async () => {
       jest.advanceTimersByTime(safety.sos.holdMs);
-    });
-    await act(async () => {
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
     });
@@ -256,16 +212,12 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
-    });
-    await act(async () => {
       jest.advanceTimersByTime(safety.sos.holdMs);
-    });
-    await act(async () => {
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
     });
 
-    // Advance 10 seconds through cancellation countdown
+    // Advance 11 seconds for cancel window interval to complete
     await act(async () => {
       jest.advanceTimersByTime(11000);
     });
@@ -286,16 +238,10 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
     // Hold stand down for 3 seconds
     await act(async () => {
       fireEvent(standDownBtn, 'pressIn');
-    });
-    await act(async () => {
       jest.advanceTimersByTime(safety.sos.holdMs);
-    });
-    await act(async () => {
       fireEvent(standDownBtn, 'pressOut');
       fireEvent.press(standDownBtn);
-    });
-    await act(async () => {
-      jest.advanceTimersByTime(1500);
+      jest.advanceTimersByTime(1500); // Complete stand down delay
     });
 
     // Verify stood down confirmation screen
@@ -330,14 +276,12 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
 
     await act(async () => {
       fireEvent(sosButton, 'pressIn');
-    });
-    await act(async () => {
       jest.advanceTimersByTime(safety.sos.holdMs);
-    });
-    await act(async () => {
       fireEvent(sosButton, 'pressOut');
       fireEvent.press(sosButton);
     });
+
+    // Advance 11 seconds for cancel window interval to complete
     await act(async () => {
       jest.advanceTimersByTime(11000);
     });
@@ -358,8 +302,6 @@ describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
     const confirmStandDownBtn = view.getByLabelText('Confirm stand down simulated emergency');
     await act(async () => {
       fireEvent.press(confirmStandDownBtn);
-    });
-    await act(async () => {
       jest.advanceTimersByTime(1500);
     });
 
