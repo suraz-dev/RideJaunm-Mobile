@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
+import { OfflineMapsScreen } from './OfflineMapsScreen';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
 import { ThemeMode, primitive } from '../design/tokens';
@@ -11,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 export const ProfileGarageScreen: React.FC = () => {
   const { mode, setMode, colors } = useTheme();
   const { offlineRegions, pendingOperationsCount, resetAccountData } = useAppState();
+  const [showOfflineManager, setShowOfflineManager] = useState(false);
 
   const themesList: { key: ThemeMode; label: string; desc: string }[] = [
     { key: 'night', label: 'Night (रात्री)', desc: 'Tactical dark base (Default)' },
@@ -24,19 +26,50 @@ export const ProfileGarageScreen: React.FC = () => {
     setMode(newMode);
   };
 
-  const getLifecycleBadge = (lifecycle: string) => {
+  const getLifecycleBadge = (lifecycle: string, progressPercentage?: number) => {
     switch (lifecycle) {
       case 'complete':
-        return <Badge label="DOWNLOADED" variant="volt" size="sm" />;
+        return <Badge label="COMPLETE (FIXTURE)" variant="volt" size="sm" />;
       case 'downloading':
-        return <Badge label="45% DOWNLOADING" variant="cyan" size="sm" />;
+        return (
+          <Badge
+            label={`DOWNLOADING PREVIEW (${progressPercentage ?? 45}%)`}
+            variant="cyan"
+            size="sm"
+          />
+        );
       case 'queued':
-        return <Badge label="QUEUED" variant="neutral" size="sm" />;
+        return <Badge label="QUEUED (FIXTURE)" variant="neutral" size="sm" />;
+      case 'paused':
+        return (
+          <Badge
+            label={`PAUSED PREVIEW (${progressPercentage ?? 60}%)`}
+            variant="warning"
+            size="sm"
+          />
+        );
+      case 'partial':
+        return (
+          <Badge
+            label={`PARTIAL PREVIEW (${progressPercentage ?? 70}%)`}
+            variant="warning"
+            size="sm"
+          />
+        );
+      case 'stale':
+        return <Badge label="STALE (FIXTURE UPDATE PREVIEW)" variant="warning" size="sm" />;
+      case 'failed':
+        return <Badge label="FAILED (SIMULATED)" variant="warning" size="sm" />;
       case 'storage_full':
+        return <Badge label="STORAGE FULL (FIXTURE)" variant="warning" size="sm" />;
       default:
-        return <Badge label="STORAGE FULL" variant="danger" size="sm" />;
+        return <Badge label="FIXTURE PREVIEW" variant="neutral" size="sm" />;
     }
   };
+
+  if (showOfflineManager) {
+    return <OfflineMapsScreen onBackToMain={() => setShowOfflineManager(false)} />;
+  }
 
   return (
     <ScrollView
@@ -59,7 +92,7 @@ export const ProfileGarageScreen: React.FC = () => {
           <Badge label="VERIFIED" variant="volt" size="sm" />
         </View>
 
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, { borderTopColor: colors.borderSubtle }]}>
           <View style={styles.statBox}>
             <Text variant="bodySmall" muted>TOTAL RIDES</Text>
             <Text variant="h3" style={{ color: colors.text }}>48</Text>
@@ -77,10 +110,24 @@ export const ProfileGarageScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Offline Region Cache Manager */}
-      <Text variant="h3" style={styles.sectionHeader}>
-        Nepal Offline Map Packs ({offlineRegions.length})
-      </Text>
+      {/* Offline Region Cache Manager (Fixture Preview) */}
+      <View style={styles.sectionHeaderRow}>
+        <Text variant="h3" style={styles.sectionHeader}>
+          Nepal Offline Map Packs — Fixture Preview ({offlineRegions.length})
+        </Text>
+        <TouchableOpacity
+          style={styles.manageBtn}
+          onPress={() => setShowOfflineManager(true)}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Open offline region manager"
+        >
+          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+            MANAGE ➔
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         {offlineRegions.map((region, idx) => (
           <React.Fragment key={region.id}>
@@ -93,13 +140,20 @@ export const ProfileGarageScreen: React.FC = () => {
                   {Math.round(region.sizeBytes / (1024 * 1024))} MB · {region.includes3dElevation ? '3D Elevation' : '2D Tiles'}
                 </Text>
               </View>
-              {getLifecycleBadge(region.lifecycle)}
+              {getLifecycleBadge(region.lifecycle, region.progressPercentage)}
             </View>
             {idx < offlineRegions.length - 1 && (
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
             )}
           </React.Fragment>
         ))}
+
+        <Button
+          label="OPEN OFFLINE MAPS MANAGER"
+          onPress={() => setShowOfflineManager(true)}
+          variant="secondary"
+          style={{ marginTop: primitive.spacing[3] }}
+        />
       </View>
 
       {/* 4 Theme Modes Selector */}
@@ -174,15 +228,26 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingTop: primitive.spacing[3],
   },
   statBox: {
     flex: 1,
   },
-  sectionHeader: {
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: primitive.spacing[3],
     marginBottom: primitive.spacing[3],
+  },
+  sectionHeader: {
+    marginVertical: 0,
+  },
+  manageBtn: {
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingHorizontal: primitive.spacing[2],
   },
   regionRow: {
     flexDirection: 'row',

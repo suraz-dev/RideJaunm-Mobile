@@ -67,19 +67,21 @@ export interface AppStateProviderProps {
   children: ReactNode;
   store?: LocalStore;
   initialConnectionState?: ConnectionStateSnapshot;
+  initialOfflineRegions?: OfflineRegion[];
 }
 
 export const AppStateProvider: React.FC<AppStateProviderProps> = ({
   children,
   store = localStore,
   initialConnectionState = connectionOnlineSnapshot,
+  initialOfflineRegions,
 }) => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeRoute, setActiveRouteState] = useState<RouteCandidate>(kathmanduToPokharaCurvy);
   const [connectionState, setConnectionState] =
     useState<ConnectionStateSnapshot>(initialConnectionState);
   const [offlineRegions, setOfflineRegions] =
-    useState<OfflineRegion[]>(allOfflineRegionFixtures);
+    useState<OfflineRegion[]>(initialOfflineRegions ?? allOfflineRegionFixtures);
   const [pendingOps, setPendingOps] = useState<QueuedOperation[]>([]);
   const [activeSosSnapshot, setSosState] = useState<SafetyIncidentSnapshot | undefined>(undefined);
   const [storageFaults, setStorageFaults] = useState<string[]>([]);
