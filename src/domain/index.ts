@@ -7,3 +7,4 @@ export * from './outbox';
 export * from './safety';
 export * from './map';
 export * from './mapOverlay';
+export * from './telemetryPresentation';

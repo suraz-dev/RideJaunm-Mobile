@@ -1,15 +1,16 @@
 /**
  * ============================================================================
- * TACTICAL MAP MARKERS OVERLAY (R8)
+ * TACTICAL MAP MARKERS OVERLAY (R8 / R9)
  * ============================================================================
  *
  * WHY THIS EXISTS:
  * Renders high-contrast tactical markers for Origin, Destination, Waypoints,
- * and Hazards on the synthetic map canvas.
+ * Hazards, and Rider Position on the synthetic map canvas.
  *
- * SAFETY INVARIANT:
- * Hazard markers strictly use warning amber / hazard tokens (#F2603C / #FFB020)
- * and NEVER use SOS Red (#FF1F3D).
+ * SAFETY INVARIANTS:
+ * 1. Hazard markers strictly use warning amber / hazard tokens (#F2603C / #FFB020)
+ *    and NEVER use SOS Red (#FF1F3D).
+ * 2. Rider marker is rendered only when GPS is 'locked' or 'stale' (with disclosure).
  */
 
 import React from 'react';
@@ -52,6 +53,36 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({ markers, onMarkerPress
             <View style={[styles.waypointDot, { backgroundColor: primitive.color.cyan[400] }]} />
           </View>
         );
+      case 'rider':
+        return (
+          <View style={styles.riderContainer}>
+            {/* Accuracy Halo */}
+            <View
+              style={[
+                styles.riderHalo,
+                {
+                  borderColor: marker.isStale ? primitive.color.semantic.warning : primitive.color.volt[400],
+                  backgroundColor: marker.isStale
+                    ? isDayGlare ? primitive.color.snow[300] : colors.surfaceCard
+                    : isDayGlare ? primitive.color.snow[0] : colors.surfaceElevated,
+                },
+              ]}
+            >
+              {/* Directional Heading Cone / Dot */}
+              <View
+                style={[
+                  styles.riderDot,
+                  {
+                    backgroundColor: marker.isStale ? primitive.color.semantic.warning : primitive.color.volt[400],
+                    transform: [{ rotate: `${marker.headingDeg || 0}deg` }],
+                  },
+                ]}
+              >
+                <View style={styles.headingPointer} />
+              </View>
+            </View>
+          </View>
+        );
       case 'hazard':
       default:
         return (
@@ -89,11 +120,22 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({ markers, onMarkerPress
               styles.calloutLabel,
               {
                 backgroundColor: isDayGlare ? primitive.color.snow[0] : colors.surfaceElevated,
-                borderColor: marker.kind === 'hazard' ? primitive.color.route.hazard : colors.border,
+                borderColor: marker.kind === 'hazard'
+                  ? primitive.color.route.hazard
+                  : marker.isStale
+                  ? primitive.color.semantic.warning
+                  : colors.border,
               },
             ]}
           >
-            <Text variant="mono" style={{ color: colors.text, fontSize: 10, fontWeight: '700' }}>
+            <Text
+              variant="mono"
+              style={{
+                color: marker.isStale ? primitive.color.semantic.warning : colors.text,
+                fontSize: 10,
+                fontWeight: '700',
+              }}
+            >
               {marker.label}
             </Text>
           </View>
@@ -131,6 +173,39 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: primitive.radius.full,
+  },
+  riderContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  riderHalo: {
+    width: 28,
+    height: 28,
+    borderRadius: primitive.radius.full,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  riderDot: {
+    width: 12,
+    height: 12,
+    borderRadius: primitive.radius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headingPointer: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderBottomWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: primitive.color.graphite[950],
+    position: 'absolute',
+    top: -4,
   },
   hazardPin: {
     width: 26,
