@@ -7,3 +7,4 @@ export * from './locale.fixture';
 export * from './map.fixture';
 export * from './routeOverlays.fixture';
 export * from './telemetryPresentation.fixture';
+export * from './tripPlanner.fixture';
