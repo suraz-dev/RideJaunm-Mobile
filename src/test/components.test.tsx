@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '../design/ThemeProvider';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
@@ -46,5 +46,30 @@ describe('RideJaunm Core Primitive & Composite Components', () => {
     expect(view.getByText('Curvy')).toBeTruthy();
     expect(view.getByText('Supercurvy')).toBeTruthy();
     expect(view.getByText('अत्यन्त घुमाउरो')).toBeTruthy();
+  });
+
+  test('renders RouteModeSelector with disabled Terai Supercurvy state and restriction notice', async () => {
+    const handleSelect = jest.fn();
+
+    const view = await render(
+      <ThemeProvider>
+        <RouteModeSelector
+          selectedMode="curvy"
+          onSelectMode={handleSelect}
+          disabledModes={['supercurvy']}
+          disabledReason="Supercurvy disabled: Terai flat corridor has no mountain bends"
+        />
+      </ThemeProvider>
+    );
+
+    expect(view.getByText('अनुपलब्ध')).toBeTruthy();
+    expect(
+      view.getByText(/Supercurvy disabled: Terai flat corridor has no mountain bends/)
+    ).toBeTruthy();
+
+    const supercurvyBtn = view.getByLabelText(/Supercurvy: Disabled/);
+    expect(supercurvyBtn).toBeTruthy();
+    fireEvent.press(supercurvyBtn);
+    expect(handleSelect).not.toHaveBeenCalled();
   });
 });

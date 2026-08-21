@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * TACTICAL GEOSPATIAL MAP SURFACE COMPONENT (R7)
+ * TACTICAL GEOSPATIAL MAP SURFACE COMPONENT (R7 / R8)
  * ============================================================================
  *
  * WHY THIS EXISTS:
@@ -8,7 +8,7 @@
  * camera telemetry, coverage boundaries, and provenance disclosures.
  *
  * It is completely decoupled from native map SDKs and accepts only typed
- * `MapRenderInput` view models.
+ * `MapRenderInput` view models and optional overlay children (routes, markers, controls).
  *
  * DESIGN TOKEN & SAFETY INVARIANTS:
  * 1. ZERO raw hex or unexplained RGBA values: all styling is derived from
@@ -21,7 +21,7 @@
  *    borders and backdrops instead of washed-out translucent glass.
  */
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { View, StyleSheet, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
 import Svg, { Rect, Path, Defs, Pattern, Line, Circle } from 'react-native-svg';
 import { MapRenderInput } from '../../domain/map';
@@ -33,11 +33,19 @@ import { primitive } from '../../design/tokens';
 
 export interface MapSurfaceProps {
   input: MapRenderInput;
+  showTopography?: boolean;
   onRetry?: () => void;
   style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 }
 
-export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style }) => {
+export const MapSurface: React.FC<MapSurfaceProps> = ({
+  input,
+  showTopography = true,
+  onRetry,
+  style,
+  children,
+}) => {
   const { mode, colors } = useTheme();
   const { camera, baseState, networkPolicy, coverage, provenance } = input;
 
@@ -93,28 +101,32 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
           {/* Base Grid Background */}
           <Rect width="100%" height="100%" fill="url(#gridPattern)" />
 
-          {/* Topographic Contour Lines Simulation */}
-          <Path
-            d="M -20 180 C 80 120, 180 240, 280 160 C 340 100, 420 180, 500 140"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
-          <Path
-            d="M -20 280 C 60 220, 160 340, 260 260 C 360 180, 440 260, 520 220"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
-          <Path
-            d="M -20 380 C 90 320, 190 440, 290 360 C 370 300, 450 380, 520 340"
-            fill="none"
-            stroke={contourColor}
-            strokeWidth="1.5"
-            strokeOpacity={isDayGlare ? 0.35 : 0.25}
-          />
+          {/* Topographic Contour Lines Simulation (Controlled by showTopography prop) */}
+          {showTopography && (
+            <>
+              <Path
+                d="M -20 180 C 80 120, 180 240, 280 160 C 340 100, 420 180, 500 140"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+              <Path
+                d="M -20 280 C 60 220, 160 340, 260 260 C 360 180, 440 260, 520 220"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+              <Path
+                d="M -20 380 C 90 320, 190 440, 290 360 C 370 300, 450 380, 520 340"
+                fill="none"
+                stroke={contourColor}
+                strokeWidth="1.5"
+                strokeOpacity={isDayGlare ? 0.35 : 0.25}
+              />
+            </>
+          )}
 
           {/* Center Map Crosshair Marker */}
           <Circle cx="50%" cy="48%" r="4" fill={centerCrosshairColor} />
@@ -123,7 +135,10 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </Svg>
       </View>
 
-      {/* 2. Partial Missing-Coverage Wireframe / Hatched Region */}
+      {/* 2. Embedded Overlay Children (Route Polylines, Markers) */}
+      {baseState !== 'error' && baseState !== 'unavailable' && children}
+
+      {/* 3. Partial Missing-Coverage Wireframe / Hatched Region */}
       {baseState === 'partial' && (
         <View style={styles.partialOverlayContainer}>
           <Svg height="100%" width="100%">
@@ -150,7 +165,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 3. Stale Cache Disclosure Banner */}
+      {/* 4. Stale Cache Disclosure Banner */}
       {baseState === 'stale' && (
         <View style={[styles.staleNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: primitive.color.semantic.warning }]}>
           <View style={styles.staleHeaderRow}>
@@ -165,7 +180,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 4. Loading State Spinner & Overlay */}
+      {/* 5. Loading State Spinner & Overlay */}
       {baseState === 'loading' && (
         <View style={[styles.fallbackCenterCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <ActivityIndicator size="small" color={colors.interactive} />
@@ -178,7 +193,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 5. Unavailable / Error State Fallback Panel */}
+      {/* 6. Unavailable / Error State Fallback Panel */}
       {(baseState === 'unavailable' || baseState === 'error') && (
         <View
           style={[
@@ -217,7 +232,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </View>
       )}
 
-      {/* 6. Top Telemetry Pill (Coordinates & Zoom) */}
+      {/* 7. Top Telemetry Pill (Coordinates & Zoom) */}
       <View
         style={[
           styles.topTelemetryPill,
@@ -235,7 +250,7 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({ input, onRetry, style })
         </Text>
       </View>
 
-      {/* 7. Mandatory OpenStreetMap Attribution (Always Visible Bottom-Left) */}
+      {/* 8. Mandatory OpenStreetMap Attribution (Always Visible Bottom-Left) */}
       <View
         style={[
           styles.attributionTag,
