@@ -5,14 +5,15 @@
  *
  * WHY THIS EXISTS:
  * Renders full route comparison metrics (distance, duration, curvature,
- * elevation, surface, hazards, permits, and availability status) for
+ * elevation, surface, hazards, permits, provenance, and availability status) for
  * Straight, Curvy, and Supercurvy route profiles.
  *
  * SAFETY & ACCESSIBILITY INVARIANTS:
  * 1. Unavailable candidates are non-selectable and clearly announce reason.
  * 2. Restricted candidates disclose mandatory permits without silent bypass.
  * 3. Never uses SOS Red (#FF1F3D) for route restrictions or warnings.
- * 4. Zero raw hex/RGBA; uses semantic theme tokens.
+ * 4. Discloses source version and synthetic provenance on every card.
+ * 5. Zero raw hex/RGBA; uses semantic theme tokens.
  */
 
 import React from 'react';
@@ -178,6 +179,13 @@ export const CandidateComparisonCard: React.FC<CandidateComparisonCardProps> = (
           )}
         </View>
       )}
+
+      {/* [P1] Provenance & Synthetic Fixture Disclosure */}
+      <View style={[styles.provenanceRow, { borderTopColor: colors.borderSubtle }]}>
+        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+          ℹ️ Source: {candidate.provenance.sourceVersion} · {candidate.provenance.syntheticDisclosure}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -223,5 +231,10 @@ const styles = StyleSheet.create({
     padding: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
+  },
+  provenanceRow: {
+    marginTop: primitive.spacing[2],
+    paddingTop: primitive.spacing[2],
+    borderTopWidth: 0.5,
   },
 });

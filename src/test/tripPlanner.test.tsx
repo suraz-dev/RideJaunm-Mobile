@@ -5,7 +5,7 @@ import { ThemeProvider } from '../design/ThemeProvider';
 import { ThemeMode } from '../design/tokens';
 
 describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
-  test('renders TripPlannerScreen with default Kathmandu to Pokhara candidates and Curvy selected', async () => {
+  test('renders TripPlannerScreen with default Kathmandu to Pokhara candidates, Curvy default, and provenance disclosure', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
         <TripPlannerScreen />
@@ -13,11 +13,44 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     );
 
     expect(view.getByText('Trip Planner (यात्रा योजना)')).toBeTruthy();
-    expect(view.getByText(/Kathmandu/)).toBeTruthy();
-    expect(view.getByText(/Pokhara/)).toBeTruthy();
+    expect(view.getAllByText(/Kathmandu/).length).toBeGreaterThanOrEqual(1);
+    expect(view.getAllByText(/Pokhara/).length).toBeGreaterThanOrEqual(1);
     expect(view.getAllByText(/Curvy: Prithvi Highway/).length).toBeGreaterThanOrEqual(1);
     expect(view.getByText(/Straight: Express Valley Corridor/)).toBeTruthy();
     expect(view.getByText(/Supercurvy: High Pass Mountain Route/)).toBeTruthy();
+
+    // Provenance disclosure
+    expect(view.getAllByText(/Source: NP-ROUTING-2026.08.15/).length).toBeGreaterThanOrEqual(1);
+
+    // Synthetic map preview is rendered
+    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
+  });
+
+  test('allows editing Origin location via local catalog search', async () => {
+    const view = await render(
+      <ThemeProvider initialMode="night">
+        <TripPlannerScreen />
+      </ThemeProvider>
+    );
+
+    const changeOriginBtn = view.getByLabelText('Change trip origin location');
+    expect(changeOriginBtn).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(changeOriginBtn);
+    });
+
+    const originInput = view.getByPlaceholderText(/Search Nepal origin/);
+    await act(async () => {
+      fireEvent.changeText(originInput, 'Biratnagar');
+    });
+
+    const biratnagarOption = view.getByLabelText('Select origin: Biratnagar');
+    await act(async () => {
+      fireEvent.press(biratnagarOption);
+    });
+
+    expect(view.getAllByText(/Biratnagar/).length).toBeGreaterThanOrEqual(1);
   });
 
   test('switches between Solo and Squad planning intent with R11 handoff notice', async () => {
@@ -45,14 +78,14 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     expect(view.queryByText('TASK R11 HANDOFF PREVIEW')).toBeNull();
   });
 
-  test('searches local Nepal places catalogue and selects Janakpur (Terai corridor)', async () => {
+  test('searches local Nepal places catalogue, selects Janakpur (Terai corridor), and preserves Curvy as default', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
         <TripPlannerScreen />
       </ThemeProvider>
     );
 
-    const changeDestBtn = view.getByText('🔍 Change Destination');
+    const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
       fireEvent.press(changeDestBtn);
     });
@@ -62,7 +95,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.changeText(searchInput, 'Janakpur');
     });
 
-    const janakpurResult = view.getByText('Janakpurdham');
+    const janakpurResult = view.getByLabelText('Select destination: Janakpurdham');
     expect(janakpurResult).toBeTruthy();
 
     await act(async () => {
@@ -70,11 +103,14 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     });
 
     // Terai corridor disables Supercurvy with explicit reason
-    expect(view.getByText(/Janakpurdham/)).toBeTruthy();
+    expect(view.getAllByText(/Janakpurdham/).length).toBeGreaterThanOrEqual(1);
     expect(view.getByText(/Supercurvy \(UNAVAILABLE\)/)).toBeTruthy();
     expect(
       view.getByText(/Not enough bends: Terai flat plains corridor has no mountain twisties/)
     ).toBeTruthy();
+
+    // Preserves Curvy as default selected candidate
+    expect(view.getAllByText(/Curvy: Chure Foothill Bypass/).length).toBeGreaterThanOrEqual(1);
   });
 
   test('handles no search results gracefully against synthetic catalogue', async () => {
@@ -84,7 +120,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       </ThemeProvider>
     );
 
-    const changeDestBtn = view.getByText('🔍 Change Destination');
+    const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
       fireEvent.press(changeDestBtn);
     });
@@ -104,7 +140,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       </ThemeProvider>
     );
 
-    const changeDestBtn = view.getByText('🔍 Change Destination');
+    const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
       fireEvent.press(changeDestBtn);
     });
@@ -114,7 +150,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.changeText(searchInput, 'Mustang');
     });
 
-    const mustangResult = view.getByText('Lo Manthang (Upper Mustang)');
+    const mustangResult = view.getByLabelText('Select destination: Lo Manthang (Upper Mustang)');
     await act(async () => {
       fireEvent.press(mustangResult);
     });
@@ -126,7 +162,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     expect(view.getByText(/Department of Immigration & NTNC Nepal/)).toBeTruthy();
   });
 
-  test('supports adding, reordering (move up/down), and removing waypoints', async () => {
+  test('supports adding, reordering (move up/down), and removing waypoints with confirmation/cancellation', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
         <TripPlannerScreen />
@@ -134,15 +170,15 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     );
 
     // Initial waypoints: Kurintar, Mugling
-    expect(view.getByText('Kurintar High-Octane Fuel Checkpoint')).toBeTruthy();
-    expect(view.getByText('Mugling Riverside Rider Hub')).toBeTruthy();
+    expect(view.getAllByText('Kurintar High-Octane Fuel Checkpoint').length).toBeGreaterThanOrEqual(1);
+    expect(view.getAllByText('Mugling Riverside Rider Hub').length).toBeGreaterThanOrEqual(1);
 
     // 1. Add suggested waypoint: Malekhu
-    const addMalekhuBtn = view.getByText(/\+ Malekhu Local Highway Rest Stop/);
+    const addMalekhuBtn = view.getByLabelText('Add suggested stop: Malekhu Local Highway Rest Stop');
     await act(async () => {
       fireEvent.press(addMalekhuBtn);
     });
-    expect(view.getByText('Malekhu Local Highway Rest Stop')).toBeTruthy();
+    expect(view.getAllByText('Malekhu Local Highway Rest Stop').length).toBeGreaterThanOrEqual(1);
 
     // 2. Reorder: Move Malekhu up (was #3, now #2)
     const moveUpBtns = view.getAllByLabelText(/Move stop .* earlier in route order/);
@@ -150,12 +186,56 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.press(moveUpBtns[moveUpBtns.length - 1]); // Move up last item
     });
 
-    // 3. Remove Kurintar waypoint
+    // 3. Remove Kurintar with confirmation flow:
     const removeKurintarBtn = view.getByLabelText(/Remove stop Kurintar High-Octane Fuel Checkpoint/);
     await act(async () => {
       fireEvent.press(removeKurintarBtn);
     });
+
+    // Confirmation prompt is visible
+    expect(view.getByText('Remove stop Kurintar High-Octane Fuel Checkpoint?')).toBeTruthy();
+    expect(view.getByText('YES, REMOVE')).toBeTruthy();
+    expect(view.getByText('CANCEL')).toBeTruthy();
+
+    // Test Cancel first
+    const cancelBtn = view.getByText('CANCEL');
+    await act(async () => {
+      fireEvent.press(cancelBtn);
+    });
+    expect(view.getAllByText('Kurintar High-Octane Fuel Checkpoint').length).toBeGreaterThanOrEqual(1);
+
+    // Trigger remove again and Confirm
+    const removeAgainBtn = view.getByLabelText(/Remove stop Kurintar High-Octane Fuel Checkpoint/);
+    await act(async () => {
+      fireEvent.press(removeAgainBtn);
+    });
+    const confirmBtn = view.getByText('YES, REMOVE');
+    await act(async () => {
+      fireEvent.press(confirmBtn);
+    });
     expect(view.queryByText('Kurintar High-Octane Fuel Checkpoint')).toBeNull();
+  });
+
+  test('toggles fixture map preview visibility', async () => {
+    const view = await render(
+      <ThemeProvider initialMode="night">
+        <TripPlannerScreen />
+      </ThemeProvider>
+    );
+
+    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
+
+    const hideMapBtn = view.getByText('HIDE FIXTURE MAP (नक्सा लुकाउनुहोस्)');
+    await act(async () => {
+      fireEvent.press(hideMapBtn);
+    });
+    expect(view.queryByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeNull();
+
+    const previewMapBtn = view.getByText('PREVIEW FIXTURE ROUTE (पूर्वावलोकन)');
+    await act(async () => {
+      fireEvent.press(previewMapBtn);
+    });
+    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
   });
 
   test('renders cleanly across all 4 theme modes', async () => {

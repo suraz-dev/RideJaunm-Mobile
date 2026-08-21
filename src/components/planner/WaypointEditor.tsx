@@ -6,16 +6,16 @@
  * WHY THIS EXISTS:
  * Allows riders to add, remove, and reorder intermediate route stops
  * (fuel gaps, scenic viewpoints, meal hubs, and permit checkpoints)
- * with accessible touch controls.
+ * with accessible touch controls and destructive action confirmation.
  *
  * ACCESSIBILITY INVARIANTS:
  * 1. Reordering controls (Move Up / Move Down) have distinct accessible labels
  *    and minimum touch targets of 48 dp.
- * 2. Remove buttons have descriptive accessibility action labels.
+ * 2. Destructive waypoint removal requires explicit confirmation before mutation.
  * 3. Pre-authored synthetic waypoint estimates only.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { PlannerWaypoint } from '../../domain/tripPlanner';
 import { Text } from '../primitives/Text';
@@ -44,6 +44,9 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
   const { colors, mode } = useTheme();
   const isDayGlare = mode === 'dayGlare';
 
+  // [P1] Confirmation state before permanent deletion
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+
   const getCategoryIcon = (category: PlannerWaypoint['category']) => {
     switch (category) {
       case 'fuel':
@@ -58,6 +61,15 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
       default:
         return '☕';
     }
+  };
+
+  const handleConfirmRemove = (id: string) => {
+    onRemoveWaypoint(id);
+    setPendingRemoveId(null);
+  };
+
+  const handleCancelRemove = () => {
+    setPendingRemoveId(null);
   };
 
   // Filter out suggestions that are already in the waypoints list
@@ -92,6 +104,7 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
       {waypoints.map((wp, index) => {
         const isFirst = index === 0;
         const isLast = index === waypoints.length - 1;
+        const isPendingDelete = pendingRemoveId === wp.id;
 
         return (
           <View
@@ -100,113 +113,138 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
               styles.waypointRow,
               {
                 backgroundColor: isDayGlare ? primitive.color.snow[0] : colors.surface,
-                borderColor: colors.border,
+                borderColor: isPendingDelete ? primitive.color.semantic.danger : colors.border,
               },
             ]}
           >
-            {/* Order & Category Badge */}
-            <View style={styles.waypointInfo}>
-              <View style={styles.categoryBadgeRow}>
-                <Badge label={`#${index + 1}`} variant="cyan" size="sm" />
-                <Text style={{ marginLeft: 6, fontSize: 13 }}>
-                  {getCategoryIcon(wp.category)}
+            {isPendingDelete ? (
+              /* Confirmation view for removal */
+              <View style={styles.confirmContainer}>
+                <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '700' }}>
+                  Remove stop {wp.place.name}?
                 </Text>
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginLeft: 6, textTransform: 'uppercase' }}>
-                  {wp.category}
-                </Text>
+                <View style={styles.confirmActionRow}>
+                  <Button
+                    label="YES, REMOVE"
+                    onPress={() => handleConfirmRemove(wp.id)}
+                    variant="danger"
+                    style={{ minHeight: 48, marginRight: primitive.spacing[2], flex: 1 }}
+                  />
+                  <Button
+                    label="CANCEL"
+                    onPress={handleCancelRemove}
+                    variant="secondary"
+                    style={{ minHeight: 48, flex: 1 }}
+                  />
+                </View>
               </View>
-              <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700', marginTop: 2 }}>
-                {wp.place.name}
-              </Text>
-              {wp.place.nameNepali && (
-                <Text variant="bodySmall" style={{ color: colors.textSubtle }}>
-                  {wp.place.nameNepali}
-                </Text>
-              )}
-            </View>
+            ) : (
+              /* Standard Waypoint Row */
+              <>
+                <View style={styles.waypointInfo}>
+                  <View style={styles.categoryBadgeRow}>
+                    <Badge label={`#${index + 1}`} variant="cyan" size="sm" />
+                    <Text style={{ marginLeft: 6, fontSize: 13 }}>
+                      {getCategoryIcon(wp.category)}
+                    </Text>
+                    <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginLeft: 6, textTransform: 'uppercase' }}>
+                      {wp.category}
+                    </Text>
+                  </View>
+                  <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700', marginTop: 2 }}>
+                    {wp.place.name}
+                  </Text>
+                  {wp.place.nameNepali && (
+                    <Text variant="bodySmall" style={{ color: colors.textSubtle }}>
+                      {wp.place.nameNepali}
+                    </Text>
+                  )}
+                </View>
 
-            {/* Reorder & Remove Actions */}
-            <View style={styles.actionControls}>
-              {/* Move Up */}
-              <TouchableOpacity
-                style={[
-                  styles.controlBtn,
-                  {
-                    backgroundColor: isFirst ? colors.surfaceCard : colors.surfaceElevated,
-                    borderColor: colors.border,
-                  },
-                ]}
-                onPress={() => onMoveUp(index)}
-                disabled={isFirst}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel={`Move stop ${wp.place.name} earlier in route order`}
-              >
-                <Text
-                  variant="mono"
-                  style={{
-                    color: isFirst ? colors.textSubtle : colors.text,
-                    fontSize: 12,
-                    fontWeight: '700',
-                  }}
-                >
-                  ▲
-                </Text>
-              </TouchableOpacity>
+                {/* Reorder & Remove Actions */}
+                <View style={styles.actionControls}>
+                  {/* Move Up */}
+                  <TouchableOpacity
+                    style={[
+                      styles.controlBtn,
+                      {
+                        backgroundColor: isFirst ? colors.surfaceCard : colors.surfaceElevated,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    onPress={() => onMoveUp(index)}
+                    disabled={isFirst}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move stop ${wp.place.name} earlier in route order`}
+                  >
+                    <Text
+                      variant="mono"
+                      style={{
+                        color: isFirst ? colors.textSubtle : colors.text,
+                        fontSize: 12,
+                        fontWeight: '700',
+                      }}
+                    >
+                      ▲
+                    </Text>
+                  </TouchableOpacity>
 
-              {/* Move Down */}
-              <TouchableOpacity
-                style={[
-                  styles.controlBtn,
-                  {
-                    backgroundColor: isLast ? colors.surfaceCard : colors.surfaceElevated,
-                    borderColor: colors.border,
-                  },
-                ]}
-                onPress={() => onMoveDown(index)}
-                disabled={isLast}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel={`Move stop ${wp.place.name} later in route order`}
-              >
-                <Text
-                  variant="mono"
-                  style={{
-                    color: isLast ? colors.textSubtle : colors.text,
-                    fontSize: 12,
-                    fontWeight: '700',
-                  }}
-                >
-                  ▼
-                </Text>
-              </TouchableOpacity>
+                  {/* Move Down */}
+                  <TouchableOpacity
+                    style={[
+                      styles.controlBtn,
+                      {
+                        backgroundColor: isLast ? colors.surfaceCard : colors.surfaceElevated,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    onPress={() => onMoveDown(index)}
+                    disabled={isLast}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move stop ${wp.place.name} later in route order`}
+                  >
+                    <Text
+                      variant="mono"
+                      style={{
+                        color: isLast ? colors.textSubtle : colors.text,
+                        fontSize: 12,
+                        fontWeight: '700',
+                      }}
+                    >
+                      ▼
+                    </Text>
+                  </TouchableOpacity>
 
-              {/* Remove */}
-              <TouchableOpacity
-                style={[
-                  styles.controlBtn,
-                  {
-                    backgroundColor: colors.surfaceElevated,
-                    borderColor: primitive.color.semantic.danger,
-                  },
-                ]}
-                onPress={() => onRemoveWaypoint(wp.id)}
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel={`Remove stop ${wp.place.name} from route`}
-              >
-                <Text
-                  variant="mono"
-                  style={{
-                    color: primitive.color.semantic.danger,
-                    fontSize: 13,
-                    fontWeight: '900',
-                  }}
-                >
-                  ✕
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  {/* Remove - Triggers confirmation */}
+                  <TouchableOpacity
+                    style={[
+                      styles.controlBtn,
+                      {
+                        backgroundColor: colors.surfaceElevated,
+                        borderColor: primitive.color.semantic.danger,
+                      },
+                    ]}
+                    onPress={() => setPendingRemoveId(wp.id)}
+                    accessible
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove stop ${wp.place.name} from route`}
+                  >
+                    <Text
+                      variant="mono"
+                      style={{
+                        color: primitive.color.semantic.danger,
+                        fontSize: 13,
+                        fontWeight: '900',
+                      }}
+                    >
+                      ✕
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         );
       })}
@@ -272,6 +310,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: primitive.spacing[2],
     minHeight: primitive.size.targetMin,
+  },
+  confirmContainer: {
+    flex: 1,
+    paddingVertical: primitive.spacing[1],
+  },
+  confirmActionRow: {
+    flexDirection: 'row',
+    marginTop: primitive.spacing[2],
   },
   waypointInfo: {
     flex: 1,

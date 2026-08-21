@@ -4,12 +4,13 @@
  * ============================================================================
  *
  * Coordinates:
- * 1. Local Nepal place search against synthetic fixture catalog.
+ * 1. Editable Origin & Destination search against synthetic Nepal fixture catalog.
  * 2. Solo vs Group planning intent (with read-only R11 squad handoff).
  * 3. 3-Way Route Candidate comparison (Straight, Curvy, Supercurvy).
  * 4. Explicit handling of Terai/Flat and Upper Mustang permit restrictions.
- * 5. Intermediate waypoint editor (add, remove, reorder).
- * 6. Truthful fixture disclosures across all 4 theme modes.
+ * 5. Intermediate waypoint editor (add, remove with confirmation, reorder).
+ * 6. Fixture Map Surface Preview connected directly to candidate selection.
+ * 7. Minimum 48dp touch targets and truthful disclosures across all 4 themes.
  */
 
 import React, { useState, useMemo } from 'react';
@@ -25,6 +26,9 @@ import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
 import { CandidateComparisonCard } from '../components/planner/CandidateComparisonCard';
 import { WaypointEditor } from '../components/planner/WaypointEditor';
+import { MapSurface } from '../components/map/MapSurface';
+import { RouteLayer } from '../components/map/RouteLayer';
+import { MarkerLayer } from '../components/map/MarkerLayer';
 import { useTheme } from '../design/ThemeProvider';
 import { primitive } from '../design/tokens';
 import {
@@ -33,6 +37,8 @@ import {
   PlannerWaypoint,
   PlannerRouteCandidate,
 } from '../domain/tripPlanner';
+import { MapRenderInput } from '../domain/map';
+import { RouteLayerInput, MapMarker } from '../domain/mapOverlay';
 import {
   nepalPlacesFixtureCatalog,
   kathmanduToPokharaPlannerCandidates,
@@ -40,6 +46,11 @@ import {
   upperMustangPermitPlannerCandidates,
   suggestedWaypointsCatalog,
 } from '../fixtures/tripPlanner.fixture';
+import {
+  curvyRouteTraceFixture,
+  straightRouteTraceFixture,
+  supercurvyRouteTraceFixture,
+} from '../fixtures/routeOverlays.fixture';
 
 export const TripPlannerScreen: React.FC = () => {
   const { colors, mode } = useTheme();
@@ -48,19 +59,22 @@ export const TripPlannerScreen: React.FC = () => {
   // Planning intent: Solo vs Group (R10: read-only handoff)
   const [planningMode, setPlanningMode] = useState<PlanningMode>('solo');
 
-  // Origin & Destination State
-  const [originPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[0]); // Kathmandu
+  // [P1] Editable Origin & Destination State
+  const [originPlace, setOriginPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[0]); // Kathmandu
   const [destinationPlace, setDestinationPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[1]); // Pokhara
 
   // Place Search State
+  const [searchTarget, setSearchTarget] = useState<'origin' | 'destination' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
 
   // Waypoints State
   const [waypoints, setWaypoints] = useState<PlannerWaypoint[]>([
     suggestedWaypointsCatalog[0], // Kurintar
     suggestedWaypointsCatalog[1], // Mugling
   ]);
+
+  // Fixture Map Preview Toggle
+  const [showMapPreview, setShowMapPreview] = useState(true);
 
   // Derive candidate list based on destination (Kathmandu-Pokhara, Terai, or Mustang)
   const candidateList: PlannerRouteCandidate[] = useMemo(() => {
@@ -73,10 +87,14 @@ export const TripPlannerScreen: React.FC = () => {
     return kathmanduToPokharaPlannerCandidates;
   }, [destinationPlace]);
 
-  // Selected Candidate (defaults to Curvy)
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string>(
-    kathmanduToPokharaPlannerCandidates[0].id
-  );
+  // Selected Candidate (Curvy is the initial default)
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string>(() => {
+    const defaultCand =
+      kathmanduToPokharaPlannerCandidates.find(
+        (c) => c.profile === 'curvy' && c.availability !== 'unavailable'
+      ) || kathmanduToPokharaPlannerCandidates[0];
+    return defaultCand.id;
+  });
 
   const selectedCandidate = useMemo(() => {
     return candidateList.find((c) => c.id === selectedCandidateId) || candidateList[0];
@@ -94,19 +112,27 @@ export const TripPlannerScreen: React.FC = () => {
     );
   }, [searchQuery]);
 
-  // Destination Selection
-  const handleSelectDestination = (place: PlannerPlace) => {
-    setDestinationPlace(place);
-    setSearchQuery('');
-    setIsSearching(false);
-    // Reset selection to Curvy candidate of the new route
-    if (place.id === 'place-janakpur' || place.id === 'place-biratnagar') {
-      setSelectedCandidateId(teraiCorridorPlannerCandidates[0].id);
-    } else if (place.id === 'place-mustang') {
-      setSelectedCandidateId(upperMustangPermitPlannerCandidates[0].id);
-    } else {
-      setSelectedCandidateId(kathmanduToPokharaPlannerCandidates[0].id);
+  // Place selection handler for both Origin and Destination
+  const handleSelectPlace = (place: PlannerPlace) => {
+    if (searchTarget === 'origin') {
+      setOriginPlace(place);
+    } else if (searchTarget === 'destination') {
+      setDestinationPlace(place);
+      // [P1] Explicitly preserve Curvy candidate as default
+      const nextCandidates =
+        place.id === 'place-janakpur' || place.id === 'place-biratnagar'
+          ? teraiCorridorPlannerCandidates
+          : place.id === 'place-mustang'
+          ? upperMustangPermitPlannerCandidates
+          : kathmanduToPokharaPlannerCandidates;
+
+      const defaultCurvy =
+        nextCandidates.find((c) => c.profile === 'curvy' && c.availability !== 'unavailable') ||
+        nextCandidates[0];
+      setSelectedCandidateId(defaultCurvy.id);
     }
+    setSearchQuery('');
+    setSearchTarget(null);
   };
 
   // Waypoint operations
@@ -145,6 +171,67 @@ export const TripPlannerScreen: React.FC = () => {
     const reindexed = next.map((w, idx) => ({ ...w, order: idx + 1 }));
     setWaypoints(reindexed);
   };
+
+  // [P1] Dynamic Map Render Input & Overlays connected to selected candidate profile
+  const activeRouteTrace: RouteLayerInput = useMemo(() => {
+    switch (selectedCandidate.profile) {
+      case 'supercurvy':
+        return supercurvyRouteTraceFixture;
+      case 'straight':
+        return straightRouteTraceFixture;
+      case 'curvy':
+      default:
+        return curvyRouteTraceFixture;
+    }
+  }, [selectedCandidate.profile]);
+
+  const mapRenderInput: MapRenderInput = useMemo(() => {
+    return {
+      camera: {
+        center: { latitude: 27.7172, longitude: 85.324 },
+        zoom: 9.5,
+        bearingDegrees: 0,
+        pitchDegrees: 0,
+      },
+      networkPolicy: 'cache_only',
+      baseState: 'fresh',
+      coverage: { isCovered: true },
+      provenance: {
+        source: 'OpenStreetMap Vector Contours (Synthetic Fixture)',
+        sourceVersion: 'OSM-NP-2026.08.15',
+        licence: 'Open Database Licence (ODbL) 1.0',
+        attribution: '© OpenStreetMap contributors',
+      },
+    };
+  }, []);
+
+  const previewMarkers: MapMarker[] = useMemo(() => {
+    const list: MapMarker[] = [
+      {
+        id: 'marker-origin',
+        kind: 'origin',
+        position: { x: 18, y: 78 },
+        label: originPlace.name,
+      },
+      {
+        id: 'marker-destination',
+        kind: 'destination',
+        position: { x: 82, y: 22 },
+        label: destinationPlace.name,
+      },
+    ];
+
+    waypoints.forEach((wp, idx) => {
+      list.push({
+        id: wp.id,
+        kind: 'waypoint',
+        position: { x: 30 + idx * 20, y: 60 - idx * 15 },
+        label: wp.place.name,
+      });
+    });
+
+    return list;
+  }, [originPlace, destinationPlace, waypoints]);
 
   return (
     <ScrollView
@@ -240,37 +327,121 @@ export const TripPlannerScreen: React.FC = () => {
         </View>
       )}
 
-      {/* 2. Destination Search & Route Corridor Card */}
+      {/* 2. Destination & Origin Search Card */}
       <View style={[styles.corridorCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {/* Origin Display */}
+        {/* Origin Row with Editable Search */}
         <View style={styles.corridorRow}>
-          <Text variant="bodySmall" muted style={{ fontSize: 10, letterSpacing: 0.5 }}>
-            ORIGIN (सुरुवात)
-          </Text>
-          <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700' }}>
-            {originPlace.name} {originPlace.nameNepali && `(${originPlace.nameNepali})`}
-          </Text>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-            {originPlace.region}
-          </Text>
+          <View style={styles.destHeaderRow}>
+            <Text variant="bodySmall" muted style={{ fontSize: 10, letterSpacing: 0.5 }}>
+              ORIGIN (सुरुवात)
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setSearchTarget(searchTarget === 'origin' ? null : 'origin');
+                setSearchQuery('');
+              }}
+              style={styles.searchToggleBtn}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={searchTarget === 'origin' ? 'Close origin search' : 'Change trip origin location'}
+            >
+              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '600' }}>
+                {searchTarget === 'origin' ? '✕ Close' : '🔍 Change Origin'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {searchTarget !== 'origin' ? (
+            <>
+              <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700' }}>
+                {originPlace.name} {originPlace.nameNepali && `(${originPlace.nameNepali})`}
+              </Text>
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+                {originPlace.region}
+              </Text>
+            </>
+          ) : (
+            <View style={styles.searchBox}>
+              <TextInput
+                style={[
+                  styles.searchInput,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder="Search Nepal origin (e.g. Kathmandu, Biratnagar)..."
+                placeholderTextColor={colors.textSubtle}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+                accessible
+                accessibilityLabel="Search Nepal origin places fixture catalog"
+              />
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
+                Searching synthetic Nepal places catalogue (No remote geocoder)
+              </Text>
+
+              {/* Search Results List */}
+              {searchQuery.trim().length > 0 && (
+                <View style={[styles.resultsList, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+                  {searchResults.length === 0 ? (
+                    <View style={styles.resultItem}>
+                      <Text variant="bodySmall" muted>
+                        No places found in Nepal fixture catalog.
+                      </Text>
+                    </View>
+                  ) : (
+                    searchResults.map((place) => (
+                      <TouchableOpacity
+                        key={place.id}
+                        style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
+                        onPress={() => handleSelectPlace(place)}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={`Select origin: ${place.name}`}
+                      >
+                        <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
+                          {place.name}
+                        </Text>
+                        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+                          {place.region} · {place.nameNepali}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
 
-        {/* Destination Search / Selection */}
+        {/* Destination Row with Editable Search */}
         <View style={styles.corridorRow}>
           <View style={styles.destHeaderRow}>
             <Text variant="bodySmall" muted style={{ fontSize: 10, letterSpacing: 0.5 }}>
               DESTINATION (गन्तव्य)
             </Text>
-            <TouchableOpacity onPress={() => setIsSearching(!isSearching)} style={styles.searchToggleBtn}>
-              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11 }}>
-                {isSearching ? '✕ Close Search' : '🔍 Change Destination'}
+            <TouchableOpacity
+              onPress={() => {
+                setSearchTarget(searchTarget === 'destination' ? null : 'destination');
+                setSearchQuery('');
+              }}
+              style={styles.searchToggleBtn}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={searchTarget === 'destination' ? 'Close destination search' : 'Change trip destination location'}
+            >
+              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '600' }}>
+                {searchTarget === 'destination' ? '✕ Close' : '🔍 Change Destination'}
               </Text>
             </TouchableOpacity>
           </View>
 
-          {!isSearching ? (
+          {searchTarget !== 'destination' ? (
             <>
               <Text variant="bodyLarge" style={{ color: primitive.color.volt[400], fontWeight: '700' }}>
                 {destinationPlace.name} {destinationPlace.nameNepali && `(${destinationPlace.nameNepali})`}
@@ -316,7 +487,7 @@ export const TripPlannerScreen: React.FC = () => {
                       <TouchableOpacity
                         key={place.id}
                         style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
-                        onPress={() => handleSelectDestination(place)}
+                        onPress={() => handleSelectPlace(place)}
                         accessible
                         accessibilityRole="button"
                         accessibilityLabel={`Select destination: ${place.name}`}
@@ -337,7 +508,28 @@ export const TripPlannerScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 3. 3-Way Route Candidates Comparison */}
+      {/* 3. [P1] Connected Fixture Map Trace Preview Surface */}
+      {showMapPreview && (
+        <View style={styles.mapPreviewWrapper}>
+          <View style={styles.mapPreviewHeader}>
+            <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
+              SYNTHETIC FIXTURE ROUTE TRACE PREVIEW
+            </Text>
+            <Badge label={selectedCandidate.profile.toUpperCase()} variant="volt" size="sm" />
+          </View>
+          <View style={[styles.mapContainer, { borderColor: colors.border }]}>
+            <MapSurface input={mapRenderInput} style={{ flex: 1 }}>
+              <RouteLayer routes={[{ ...activeRouteTrace, isSelected: true }]} />
+              <MarkerLayer markers={previewMarkers} />
+            </MapSurface>
+          </View>
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
+            Synthetic Map Trace · Pre-computed Nepal fixture data (OpenStreetMap contributors)
+          </Text>
+        </View>
+      )}
+
+      {/* 4. 3-Way Route Candidates Comparison */}
       <View style={styles.candidatesSection}>
         <View style={styles.sectionTitleRow}>
           <Text variant="h2" style={{ color: colors.text }}>
@@ -359,7 +551,7 @@ export const TripPlannerScreen: React.FC = () => {
         ))}
       </View>
 
-      {/* 4. Waypoint Editor */}
+      {/* 5. Waypoint Editor */}
       <WaypointEditor
         waypoints={waypoints}
         suggestedWaypoints={suggestedWaypointsCatalog}
@@ -369,7 +561,7 @@ export const TripPlannerScreen: React.FC = () => {
         onMoveDown={handleMoveDown}
       />
 
-      {/* 5. Trip Summary & Action Button */}
+      {/* 6. Trip Summary & Action Button */}
       <View style={[styles.summaryCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
         <View style={styles.summaryHeader}>
           <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
@@ -388,8 +580,8 @@ export const TripPlannerScreen: React.FC = () => {
         </Text>
 
         <Button
-          label="PREVIEW FIXTURE ROUTE (पूर्वावलोकन)"
-          onPress={() => {}}
+          label={showMapPreview ? 'HIDE FIXTURE MAP (नक्सा लुकाउनुहोस्)' : 'PREVIEW FIXTURE ROUTE (पूर्वावलोकन)'}
+          onPress={() => setShowMapPreview(!showMapPreview)}
           variant="primary"
           style={{ marginTop: primitive.spacing[4], minHeight: 48 }}
         />
@@ -449,8 +641,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   searchToggleBtn: {
-    minHeight: 36,
+    minHeight: 48,
+    minWidth: 48,
     justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingHorizontal: primitive.spacing[2],
   },
   divider: {
     height: 1,
@@ -477,6 +672,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     minHeight: 48,
     justifyContent: 'center',
+  },
+  mapPreviewWrapper: {
+    marginBottom: primitive.spacing[4],
+  },
+  mapPreviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: primitive.spacing[2],
+  },
+  mapContainer: {
+    height: 220,
+    borderRadius: primitive.radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   candidatesSection: {
     marginVertical: primitive.spacing[3],
