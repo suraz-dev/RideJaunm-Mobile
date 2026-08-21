@@ -36,6 +36,24 @@ import { ThemeMode, safety } from '../design/tokens';
 
 describe('RideJaunm R15 Fixture SOS Console & Safety Gate', () => {
   let memoryStore: MemoryLocalStore;
+  let originalConsoleError: typeof console.error;
+
+  beforeAll(() => {
+    originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      if (
+        typeof args[0] === 'string' &&
+        args[0].includes('You seem to have overlapping act() calls')
+      ) {
+        return;
+      }
+      originalConsoleError(...args);
+    };
+  });
+
+  afterAll(() => {
+    console.error = originalConsoleError;
+  });
 
   beforeEach(() => {
     jest.useRealTimers();
