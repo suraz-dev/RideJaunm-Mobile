@@ -72,6 +72,127 @@ export const everestRegionDownloading: OfflineRegion = {
   expiryUtc: '2026-11-20T10:00:00Z',
 };
 
+export const manangRegionQueued: OfflineRegion = {
+  id: 'pack-manang-v1',
+  name: 'Manang & Tilicho Lake High Route',
+  nameNepali: 'मनाङ तथा तिलिचो ताल उच्च मार्ग',
+  description: 'Besisahar to Manang, Khangsar, and Tilicho Base Camp trail.',
+  sizeBytes: 167772160, // 160 MB
+  downloadedBytes: 0,
+  progressPercentage: 0,
+  lifecycle: 'queued',
+  zoomMin: 6,
+  zoomMax: 15,
+  bounds: {
+    minLng: 83.80,
+    minLat: 28.50,
+    maxLng: 84.50,
+    maxLat: 28.90,
+  },
+  checksumSha256: 'd1e2f3a4b5c6d7e8f901a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f901a2b3c4',
+  includes3dElevation: true,
+  includesHeliLandingZones: true,
+  lastUpdatedUtc: '2026-08-15T00:00:00Z',
+  expiryUtc: '2026-11-15T00:00:00Z',
+};
+
+export const raraRegionPaused: OfflineRegion = {
+  id: 'pack-rara-mugu-v1',
+  name: 'Rara Lake & Mugu Frontier',
+  nameNepali: 'रारा ताल तथा मुगु सिमाना',
+  description: 'Surkhet, Jumla, Sinja Valley, Rara National Park corridor.',
+  sizeBytes: 209715200, // 200 MB
+  downloadedBytes: 125829120, // 60%
+  progressPercentage: 60,
+  lifecycle: 'paused',
+  zoomMin: 6,
+  zoomMax: 14,
+  bounds: {
+    minLng: 81.90,
+    minLat: 29.40,
+    maxLng: 82.30,
+    maxLat: 29.70,
+  },
+  checksumSha256: 'e2f3a4b5c6d7e8f901a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f901a2b3c4d5',
+  includes3dElevation: true,
+  includesHeliLandingZones: true,
+  lastUpdatedUtc: '2026-08-14T08:00:00Z',
+  expiryUtc: '2026-11-14T08:00:00Z',
+};
+
+export const langtangRegionPartial: OfflineRegion = {
+  id: 'pack-langtang-helambu-v1',
+  name: 'Langtang & Gosaikunda Passes',
+  nameNepali: 'लाङटाङ तथा गोसाइँकुण्ड मार्ग',
+  description: 'Syabrubesi, Kyanjin Gompa, Laurebina Pass.',
+  sizeBytes: 136314880, // 130 MB
+  downloadedBytes: 95420416, // 70%
+  progressPercentage: 70,
+  lifecycle: 'partial',
+  zoomMin: 6,
+  zoomMax: 15,
+  bounds: {
+    minLng: 85.20,
+    minLat: 28.00,
+    maxLng: 85.70,
+    maxLat: 28.30,
+  },
+  checksumSha256: 'f3a4b5c6d7e8f901a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f901a2b3c4d5e6',
+  includes3dElevation: true,
+  includesHeliLandingZones: true,
+  lastUpdatedUtc: '2026-08-16T12:00:00Z',
+  expiryUtc: '2026-11-16T12:00:00Z',
+};
+
+export const pokharaRegionStale: OfflineRegion = {
+  id: 'pack-pokhara-valley-v1',
+  name: 'Pokhara Valley & Sarangkot Ridge',
+  nameNepali: 'पोखरा उपत्यका तथा सराङकोट',
+  description: 'Cached 90 days ago; new monsoon road updates available.',
+  sizeBytes: 104857600, // 100 MB
+  downloadedBytes: 104857600,
+  progressPercentage: 100,
+  lifecycle: 'stale',
+  zoomMin: 6,
+  zoomMax: 16,
+  bounds: {
+    minLng: 83.85,
+    minLat: 28.15,
+    maxLng: 84.10,
+    maxLat: 28.30,
+  },
+  checksumSha256: 'a1b2c3d4e5f60718293a4b5c6d7e8f901a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d',
+  includes3dElevation: true,
+  includesHeliLandingZones: true,
+  lastUpdatedUtc: '2026-05-10T00:00:00Z', // 3 months old
+  expiryUtc: '2026-08-10T00:00:00Z',
+};
+
+export const annapurnaRegionFailed: OfflineRegion = {
+  id: 'pack-annapurna-south-v1',
+  name: 'Annapurna Sanctuary & ABC Trail',
+  nameNepali: 'अन्नपूर्ण आधार शिविर मार्ग',
+  description: 'Ghandruk, Chhomrong, Deurali, Machhapuchhre Base Camp.',
+  sizeBytes: 157286400, // 150 MB
+  downloadedBytes: 20971520,
+  progressPercentage: 13,
+  lifecycle: 'failed',
+  zoomMin: 6,
+  zoomMax: 15,
+  bounds: {
+    minLng: 83.70,
+    minLat: 28.30,
+    maxLng: 84.00,
+    maxLat: 28.60,
+  },
+  checksumSha256: 'b2c3d4e5f60718293a4b5c6d7e8f901a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e',
+  includes3dElevation: true,
+  includesHeliLandingZones: true,
+  lastUpdatedUtc: '2026-08-19T14:00:00Z',
+  expiryUtc: '2026-11-19T14:00:00Z',
+  failureReason: 'Checksum mismatch after network disconnect. Retry required.',
+};
+
 export const dolpaRegionStorageFull: OfflineRegion = {
   id: 'pack-dolpa-karnali-v1',
   name: 'Upper Dolpa & Shey Phoksundo',
@@ -96,3 +217,15 @@ export const dolpaRegionStorageFull: OfflineRegion = {
   expiryUtc: '2026-11-18T12:00:00Z',
   failureReason: 'Insufficient device flash storage available (Needs 300 MB free).',
 };
+
+export const allOfflineRegionFixtures: OfflineRegion[] = [
+  mustangCircuitRegion,
+  bagmatiNarayaniRegion,
+  everestRegionDownloading,
+  manangRegionQueued,
+  raraRegionPaused,
+  langtangRegionPartial,
+  pokharaRegionStale,
+  annapurnaRegionFailed,
+  dolpaRegionStorageFull,
+];
