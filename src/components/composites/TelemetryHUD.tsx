@@ -12,7 +12,8 @@
  * 2. Stale/Lost states NEVER use numeric 0 as a substitute for unavailable
  *    telemetry; non-numeric placeholder ("--") is displayed instead.
  * 3. Stale GPS clearly discloses last-known fix age and avoids "live" claims.
- * 4. Never uses SOS Red (#FF1F3D) for GPS errors or offline status.
+ * 4. A valid observed speed of 0 is preserved and displayed as "0" (never fabricated).
+ * 5. Zero raw hex or RGBA; uses semantic theme tokens.
  */
 
 import React from 'react';
@@ -84,14 +85,14 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
   };
 
   const formatSpeed = () => {
-    if (gpsStatus !== 'locked' || speedKmh === undefined) {
+    if (gpsStatus !== 'locked' || typeof speedKmh !== 'number') {
       return '--';
     }
     return Math.round(speedKmh).toString();
   };
 
   const formatAltitude = () => {
-    if (altitudeMeters === undefined || gpsStatus === 'lost') {
+    if (typeof altitudeMeters !== 'number' || gpsStatus === 'lost') {
       return '--';
     }
     return Math.round(altitudeMeters).toString();
@@ -104,6 +105,7 @@ export const TelemetryHUD: React.FC<TelemetryHUDProps> = ({
         {
           backgroundColor: isDayGlare ? colors.surfaceElevated : colors.mapGlass.backgroundColor,
           borderColor: colors.border,
+          shadowColor: primitive.color.graphite[950],
         },
         style,
       ]}
@@ -178,7 +180,6 @@ const styles = StyleSheet.create({
     borderRadius: primitive.radius.xl,
     padding: primitive.spacing[4],
     borderWidth: 1,
-    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

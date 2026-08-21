@@ -33,6 +33,23 @@ describe('RideJaunm R9 Truthful TelemetryHUD Component', () => {
     expect(view.getByText(/Simulated Local GPS Fix/)).toBeTruthy();
   });
 
+  test('preserves valid observed stationary speed of 0 and never fabricates non-zero speed', async () => {
+    const view = await render(
+      <ThemeProvider initialMode="night">
+        <TelemetryHUD
+          speedKmh={0}
+          altitudeMeters={1740}
+          bearingDeg={45}
+          gpsStatus="locked"
+          networkStatus="online"
+        />
+      </ThemeProvider>
+    );
+
+    expect(view.getByText('GPS LOCKED')).toBeTruthy();
+    expect(view.getByText('0')).toBeTruthy(); // Preserves exact observed 0 km/h
+  });
+
   test('renders acquiring GPS state with non-numeric speed/bearing placeholder and never substitutes 0', async () => {
     const view = await render(
       <ThemeProvider initialMode="night">
