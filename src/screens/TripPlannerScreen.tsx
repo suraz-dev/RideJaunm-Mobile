@@ -5,12 +5,13 @@
  *
  * Coordinates:
  * 1. Editable Origin & Destination search against synthetic Nepal fixture catalog.
- * 2. Solo vs Group planning intent (with read-only R11 squad handoff).
- * 3. 3-Way Route Candidate comparison (Straight, Curvy, Supercurvy).
- * 4. Explicit handling of Terai/Flat and Upper Mustang permit restrictions.
- * 5. Intermediate waypoint editor (add, remove with confirmation, reorder).
- * 6. Fixture Map Surface Preview connected directly to candidate selection.
- * 7. Minimum 48dp touch targets and truthful disclosures across all 4 themes.
+ * 2. Visible PlannerSearchState (idle, searching_fixture, results, no_results, offline_cached).
+ * 3. Solo vs Group planning intent (with read-only R11 squad handoff).
+ * 4. 3-Way Route Candidate comparison (Straight, Curvy, Supercurvy).
+ * 5. Explicit handling of Terai/Flat and Upper Mustang permit restrictions.
+ * 6. Intermediate waypoint editor (add, remove with confirmation, reorder).
+ * 7. Fixture Map Surface Preview connected directly to candidate selection.
+ * 8. Minimum 48dp touch targets and truthful disclosures across all 4 themes.
  */
 
 import React, { useState, useMemo } from 'react';
@@ -30,9 +31,11 @@ import { MapSurface } from '../components/map/MapSurface';
 import { RouteLayer } from '../components/map/RouteLayer';
 import { MarkerLayer } from '../components/map/MarkerLayer';
 import { useTheme } from '../design/ThemeProvider';
+import { useAppState } from '../state/AppStateContext';
 import { primitive } from '../design/tokens';
 import {
   PlanningMode,
+  PlannerSearchState,
   PlannerPlace,
   PlannerWaypoint,
   PlannerRouteCandidate,
@@ -52,14 +55,21 @@ import {
   supercurvyRouteTraceFixture,
 } from '../fixtures/routeOverlays.fixture';
 
-export const TripPlannerScreen: React.FC = () => {
+export interface TripPlannerScreenProps {
+  forceOfflineSearchState?: boolean;
+}
+
+export const TripPlannerScreen: React.FC<TripPlannerScreenProps> = ({
+  forceOfflineSearchState = false,
+}) => {
   const { colors, mode } = useTheme();
+  const { connectionState } = useAppState();
   const isDayGlare = mode === 'dayGlare';
 
   // Planning intent: Solo vs Group (R10: read-only handoff)
   const [planningMode, setPlanningMode] = useState<PlanningMode>('solo');
 
-  // [P1] Editable Origin & Destination State
+  // Editable Origin & Destination State
   const [originPlace, setOriginPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[0]); // Kathmandu
   const [destinationPlace, setDestinationPlace] = useState<PlannerPlace>(nepalPlacesFixtureCatalog[1]); // Pokhara
 
@@ -75,6 +85,11 @@ export const TripPlannerScreen: React.FC = () => {
 
   // Fixture Map Preview Toggle
   const [showMapPreview, setShowMapPreview] = useState(true);
+
+  const isOffline =
+    forceOfflineSearchState ||
+    connectionState.mode === 'deadZone' ||
+    connectionState.mode === 'meshOnly';
 
   // Derive candidate list based on destination (Kathmandu-Pokhara, Terai, or Mustang)
   const candidateList: PlannerRouteCandidate[] = useMemo(() => {
@@ -102,7 +117,9 @@ export const TripPlannerScreen: React.FC = () => {
 
   // Search Results against synthetic catalog
   const searchResults: PlannerPlace[] = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!searchQuery.trim()) {
+      return isOffline ? nepalPlacesFixtureCatalog : [];
+    }
     const query = searchQuery.toLowerCase().trim();
     return nepalPlacesFixtureCatalog.filter(
       (p) =>
@@ -110,7 +127,16 @@ export const TripPlannerScreen: React.FC = () => {
         (p.nameNepali && p.nameNepali.includes(query)) ||
         (p.region && p.region.toLowerCase().includes(query))
     );
-  }, [searchQuery]);
+  }, [searchQuery, isOffline]);
+
+  // [P1] Explicit PlannerSearchState derivation
+  const searchState: PlannerSearchState = useMemo(() => {
+    if (searchTarget === null) return 'idle';
+    if (isOffline) return 'offline_cached';
+    if (searchQuery.trim().length === 0) return 'searching_fixture';
+    if (searchResults.length > 0) return 'results';
+    return 'no_results';
+  }, [searchTarget, isOffline, searchQuery, searchResults]);
 
   // Place selection handler for both Origin and Destination
   const handleSelectPlace = (place: PlannerPlace) => {
@@ -118,7 +144,6 @@ export const TripPlannerScreen: React.FC = () => {
       setOriginPlace(place);
     } else if (searchTarget === 'destination') {
       setDestinationPlace(place);
-      // [P1] Explicitly preserve Curvy candidate as default
       const nextCandidates =
         place.id === 'place-janakpur' || place.id === 'place-biratnagar'
           ? teraiCorridorPlannerCandidates
@@ -172,7 +197,7 @@ export const TripPlannerScreen: React.FC = () => {
     setWaypoints(reindexed);
   };
 
-  // [P1] Dynamic Map Render Input & Overlays connected to selected candidate profile
+  // Dynamic Map Render Input & Overlays connected to selected candidate profile
   const activeRouteTrace: RouteLayerInput = useMemo(() => {
     switch (selectedCandidate.profile) {
       case 'supercurvy':
@@ -193,7 +218,7 @@ export const TripPlannerScreen: React.FC = () => {
         bearingDegrees: 0,
         pitchDegrees: 0,
       },
-      networkPolicy: 'cache_only',
+      networkPolicy: isOffline ? 'cache_only' : 'online',
       baseState: 'fresh',
       coverage: { isCovered: true },
       provenance: {
@@ -203,7 +228,7 @@ export const TripPlannerScreen: React.FC = () => {
         attribution: '© OpenStreetMap contributors',
       },
     };
-  }, []);
+  }, [isOffline]);
 
   const previewMarkers: MapMarker[] = useMemo(() => {
     const list: MapMarker[] = [
@@ -379,40 +404,64 @@ export const TripPlannerScreen: React.FC = () => {
                 accessible
                 accessibilityLabel="Search Nepal origin places fixture catalog"
               />
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-                Searching synthetic Nepal places catalogue (No remote geocoder)
-              </Text>
+
+              {/* [P1] Visible Offline Catalogue State */}
+              {searchState === 'offline_cached' && (
+                <View
+                  style={[
+                    styles.searchStatusBanner,
+                    {
+                      backgroundColor: isDayGlare ? primitive.color.snow[50] : colors.surfaceCard,
+                      borderColor: primitive.color.semantic.warning,
+                    },
+                  ]}
+                >
+                  <Badge label="OFFLINE FIXTURE CATALOGUE" variant="warning" size="sm" />
+                  <Text variant="bodySmall" style={{ color: colors.text, marginTop: 4, fontWeight: '600' }}>
+                    Offline Mode · Searching local pre-loaded synthetic Nepal places only
+                  </Text>
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
+                    No cellular network connection · Operating from local fixture storage
+                  </Text>
+                </View>
+              )}
 
               {/* Search Results List */}
-              {searchQuery.trim().length > 0 && (
-                <View style={[styles.resultsList, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-                  {searchResults.length === 0 ? (
-                    <View style={styles.resultItem}>
-                      <Text variant="bodySmall" muted>
-                        No places found in Nepal fixture catalog.
-                      </Text>
-                    </View>
-                  ) : (
-                    searchResults.map((place) => (
-                      <TouchableOpacity
-                        key={place.id}
-                        style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
-                        onPress={() => handleSelectPlace(place)}
-                        accessible
-                        accessibilityRole="button"
-                        accessibilityLabel={`Select origin: ${place.name}`}
-                      >
+              <View style={[styles.resultsList, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+                {searchState === 'no_results' ? (
+                  <View style={styles.resultItem}>
+                    <Badge label="NO MATCHES" variant="neutral" size="sm" />
+                    <Text variant="bodySmall" muted style={{ marginTop: 4 }}>
+                      No places found in Nepal fixture catalog.
+                    </Text>
+                  </View>
+                ) : (
+                  searchResults.map((place) => (
+                    <TouchableOpacity
+                      key={place.id}
+                      style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
+                      onPress={() => handleSelectPlace(place)}
+                      accessible
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select origin: ${place.name}`}
+                    >
+                      <View style={styles.resultItemHeader}>
                         <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
                           {place.name}
                         </Text>
-                        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-                          {place.region} · {place.nameNepali}
-                        </Text>
-                      </TouchableOpacity>
-                    ))
-                  )}
-                </View>
-              )}
+                        <Badge
+                          label={place.source === 'offline_fixture_catalog' ? 'OFFLINE PACK' : 'FIXTURE'}
+                          variant={place.source === 'offline_fixture_catalog' ? 'cyan' : 'neutral'}
+                          size="sm"
+                        />
+                      </View>
+                      <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
+                        {place.region} · {place.nameNepali}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
             </View>
           )}
         </View>
@@ -469,46 +518,70 @@ export const TripPlannerScreen: React.FC = () => {
                 accessible
                 accessibilityLabel="Search Nepal places fixture catalog"
               />
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-                Searching synthetic Nepal places catalogue only (No remote geocoder)
-              </Text>
+
+              {/* [P1] Visible Offline Catalogue State */}
+              {searchState === 'offline_cached' && (
+                <View
+                  style={[
+                    styles.searchStatusBanner,
+                    {
+                      backgroundColor: isDayGlare ? primitive.color.snow[50] : colors.surfaceCard,
+                      borderColor: primitive.color.semantic.warning,
+                    },
+                  ]}
+                >
+                  <Badge label="OFFLINE FIXTURE CATALOGUE" variant="warning" size="sm" />
+                  <Text variant="bodySmall" style={{ color: colors.text, marginTop: 4, fontWeight: '600' }}>
+                    Offline Mode · Searching local pre-loaded synthetic Nepal places only
+                  </Text>
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
+                    No cellular network connection · Operating from local fixture storage
+                  </Text>
+                </View>
+              )}
 
               {/* Search Results List */}
-              {searchQuery.trim().length > 0 && (
-                <View style={[styles.resultsList, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-                  {searchResults.length === 0 ? (
-                    <View style={styles.resultItem}>
-                      <Text variant="bodySmall" muted>
-                        No places found in Nepal fixture catalog.
-                      </Text>
-                    </View>
-                  ) : (
-                    searchResults.map((place) => (
-                      <TouchableOpacity
-                        key={place.id}
-                        style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
-                        onPress={() => handleSelectPlace(place)}
-                        accessible
-                        accessibilityRole="button"
-                        accessibilityLabel={`Select destination: ${place.name}`}
-                      >
+              <View style={[styles.resultsList, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+                {searchState === 'no_results' ? (
+                  <View style={styles.resultItem}>
+                    <Badge label="NO MATCHES" variant="neutral" size="sm" />
+                    <Text variant="bodySmall" muted style={{ marginTop: 4 }}>
+                      No places found in Nepal fixture catalog.
+                    </Text>
+                  </View>
+                ) : (
+                  searchResults.map((place) => (
+                    <TouchableOpacity
+                      key={place.id}
+                      style={[styles.resultItem, { borderBottomColor: colors.borderSubtle }]}
+                      onPress={() => handleSelectPlace(place)}
+                      accessible
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select destination: ${place.name}`}
+                    >
+                      <View style={styles.resultItemHeader}>
                         <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
                           {place.name}
                         </Text>
-                        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-                          {place.region} · {place.nameNepali}
-                        </Text>
-                      </TouchableOpacity>
-                    ))
-                  )}
-                </View>
-              )}
+                        <Badge
+                          label={place.source === 'offline_fixture_catalog' ? 'OFFLINE PACK' : 'FIXTURE'}
+                          variant={place.source === 'offline_fixture_catalog' ? 'cyan' : 'neutral'}
+                          size="sm"
+                        />
+                      </View>
+                      <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
+                        {place.region} · {place.nameNepali}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
             </View>
           )}
         </View>
       </View>
 
-      {/* 3. [P1] Connected Fixture Map Trace Preview Surface */}
+      {/* 3. Connected Fixture Map Trace Preview Surface */}
       {showMapPreview && (
         <View style={styles.mapPreviewWrapper}>
           <View style={styles.mapPreviewHeader}>
@@ -661,6 +734,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 48,
   },
+  searchStatusBanner: {
+    marginTop: primitive.spacing[2],
+    padding: primitive.spacing[3],
+    borderRadius: primitive.radius.md,
+    borderWidth: 1,
+  },
   resultsList: {
     marginTop: primitive.spacing[2],
     borderRadius: primitive.radius.md,
@@ -672,6 +751,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     minHeight: 48,
     justifyContent: 'center',
+  },
+  resultItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   mapPreviewWrapper: {
     marginBottom: primitive.spacing[4],

@@ -2,15 +2,29 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { TripPlannerScreen } from '../screens/TripPlannerScreen';
 import { ThemeProvider } from '../design/ThemeProvider';
+import { AppStateProvider } from '../state/AppStateContext';
+import { MemoryLocalStore } from '../services/storage/LocalStore';
+import { ConnectionStateSnapshot } from '../domain/connectivity';
+import { connectionDeadZoneSnapshot } from '../fixtures/connectivity.fixture';
 import { ThemeMode } from '../design/tokens';
 
 describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
-  test('renders TripPlannerScreen with default Kathmandu to Pokhara candidates, Curvy default, and provenance disclosure', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
+  let memoryStore: MemoryLocalStore;
+
+  beforeEach(() => {
+    memoryStore = new MemoryLocalStore();
+  });
+
+  const createWrapper = (initialConn?: ConnectionStateSnapshot) => {
+    return ({ children }: { children: React.ReactNode }) => (
+      <AppStateProvider store={memoryStore} initialConnectionState={initialConn}>
+        <ThemeProvider initialMode="night">{children}</ThemeProvider>
+      </AppStateProvider>
     );
+  };
+
+  test('renders TripPlannerScreen with default Kathmandu to Pokhara candidates, Curvy default, and provenance disclosure', async () => {
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     expect(view.getByText('Trip Planner (यात्रा योजना)')).toBeTruthy();
     expect(view.getAllByText(/Kathmandu/).length).toBeGreaterThanOrEqual(1);
@@ -27,11 +41,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('allows editing Origin location via local catalog search', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const changeOriginBtn = view.getByLabelText('Change trip origin location');
     expect(changeOriginBtn).toBeTruthy();
@@ -54,11 +64,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('switches between Solo and Squad planning intent with R11 handoff notice', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const squadTab = view.getByText(/Squad Ride/);
     await act(async () => {
@@ -79,11 +85,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('searches local Nepal places catalogue, selects Janakpur (Terai corridor), and preserves Curvy as default', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
@@ -114,11 +116,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('handles no search results gracefully against synthetic catalogue', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
@@ -133,12 +131,32 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     expect(view.getByText('No places found in Nepal fixture catalog.')).toBeTruthy();
   });
 
-  test('discloses Upper Mustang permit restriction when Mustang destination is selected', async () => {
+  test('renders visible offline-catalogue search state when in dead zone or offline mode', async () => {
     const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
+      <TripPlannerScreen forceOfflineSearchState={true} />,
+      { wrapper: createWrapper(connectionDeadZoneSnapshot) }
     );
+
+    const changeDestBtn = view.getByLabelText('Change trip destination location');
+    await act(async () => {
+      fireEvent.press(changeDestBtn);
+    });
+
+    // Explicitly asserts visible offline catalogue badge and banner
+    expect(view.getByText('OFFLINE FIXTURE CATALOGUE')).toBeTruthy();
+    expect(
+      view.getByText(/Offline Mode · Searching local pre-loaded synthetic Nepal places only/)
+    ).toBeTruthy();
+    expect(
+      view.getByText(/No cellular network connection · Operating from local fixture storage/)
+    ).toBeTruthy();
+
+    // Offline pack badge on items
+    expect(view.getAllByText('OFFLINE PACK').length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('discloses Upper Mustang permit restriction when Mustang destination is selected', async () => {
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     const changeDestBtn = view.getByLabelText('Change trip destination location');
     await act(async () => {
@@ -163,11 +181,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('supports adding, reordering (move up/down), and removing waypoints with confirmation/cancellation', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     // Initial waypoints: Kurintar, Mugling
     expect(view.getAllByText('Kurintar High-Octane Fuel Checkpoint').length).toBeGreaterThanOrEqual(1);
@@ -217,11 +231,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   });
 
   test('toggles fixture map preview visibility', async () => {
-    const view = await render(
-      <ThemeProvider initialMode="night">
-        <TripPlannerScreen />
-      </ThemeProvider>
-    );
+    const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
     expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
 
@@ -245,7 +255,8 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       const view = await render(
         <ThemeProvider initialMode={mode}>
           <TripPlannerScreen />
-        </ThemeProvider>
+        </ThemeProvider>,
+        { wrapper: createWrapper() }
       );
       expect(view.getByText('Trip Planner (यात्रा योजना)')).toBeTruthy();
     }
