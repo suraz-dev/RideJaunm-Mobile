@@ -1,14 +1,13 @@
 /**
  * ============================================================================
- * COMMUNITY FEED POST CARD (R13)
+ * COMMUNITY FEED POST CARD (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Pre-authored community feed posts with author, timestamp, and body text.
- * 2. Static route summary badge for trail condition posts.
+ * 1. Community feed posts with author, timestamp, and body text.
+ * 2. Route summary badge for trail condition posts with vector icons.
  * 3. Media placeholder simulation with low-data mode suppression.
- * 4. Component-local interactive previews (like, comment, share) with permanent truth copy.
- * 5. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
+ * 4. Component-local interactive previews (like, comment, share) with vector icons.
  */
 
 import React, { useState } from 'react';
@@ -16,6 +15,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { FixtureCommunityPost } from '../../domain/squadCommunity';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -36,7 +36,7 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
   const getPostStateBadge = (state: FixtureCommunityPost['state']) => {
     switch (state) {
       case 'cached':
-        return <Badge label="CACHED POST" variant="neutral" size="sm" />;
+        return <Badge label="CACHED" variant="neutral" size="sm" />;
       case 'media_unavailable':
         return <Badge label="MEDIA UNAVAILABLE" variant="warning" size="sm" />;
       case 'local_draft':
@@ -47,7 +47,7 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
   };
 
   const handleAction = (actionName: string) => {
-    setInteractionNotice(`${actionName} preview only · No outbox write or network sync`);
+    setInteractionNotice(`${actionName} preview only · No network sync`);
   };
 
   return (
@@ -84,7 +84,7 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
               {post.author}
             </Text>
             {post.authorNepali && (
-              <Text variant="bodySmall" style={{ color: colors.textSubtle, fontSize: 11 }}>
+              <Text variant="bodySmall" style={{ color: colors.textSubtle, fontSize: 11, fontFamily: 'Mukta_500Medium' }}>
                 {post.authorNepali}
               </Text>
             )}
@@ -98,7 +98,7 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
         {post.body}
       </Text>
       {post.bodyNepali && (
-        <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 4 }}>
+        <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 4, fontFamily: 'Mukta_500Medium' }}>
           {post.bodyNepali}
         </Text>
       )}
@@ -114,9 +114,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 11, fontWeight: '700' }}>
-            🗺️ {post.routeSummary}
-          </Text>
+          <View style={styles.routeBadgeRow}>
+            <Icon name="route" size={13} color={primitive.color.volt[400]} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 11, fontWeight: '700' }}>
+              {post.routeSummary}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -131,9 +134,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, textAlign: 'center' }}>
-            📡 Low-data fixture preview — no media loaded.
-          </Text>
+          <View style={styles.mediaNoteRow}>
+            <Icon name="wifi-off" size={13} color={colors.textSubtle} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+              Low-data mode — media omitted
+            </Text>
+          </View>
         </View>
       ) : post.state === 'media_unavailable' ? (
         <View
@@ -145,9 +151,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, textAlign: 'center' }}>
-            ⚠️ Media unavailable in offline mode.
-          </Text>
+          <View style={styles.mediaNoteRow}>
+            <Icon name="alert-triangle" size={13} color={colors.textSubtle} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+              Media unavailable in offline mode
+            </Text>
+          </View>
         </View>
       ) : post.mediaKind ? (
         <View
@@ -159,11 +168,14 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '700' }}>
-            📷 {post.mediaCaption || 'Simulated Image Placeholder'}
-          </Text>
+          <View style={styles.mediaNoteRow}>
+            <Icon name="file-text" size={14} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '700' }}>
+              {post.mediaCaption || 'Simulated Image Preview'}
+            </Text>
+          </View>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-            Simulated visual placeholder · No remote image asset loaded
+            Visual preview · No remote image asset loaded
           </Text>
         </View>
       ) : null}
@@ -179,9 +191,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {interactionNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+              {interactionNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -194,9 +209,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Like post by ${post.author}`}
         >
-          <Text variant="mono" style={{ color: colors.text, fontSize: 12 }}>
-            👍 Like ({post.likesCount})
-          </Text>
+          <View style={styles.btnContentRow}>
+            <Icon name="heart" size={13} color={colors.text} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: colors.text, fontSize: 12 }}>
+              Like ({post.likesCount})
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -206,9 +224,12 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Comment on post by ${post.author}`}
         >
-          <Text variant="mono" style={{ color: colors.text, fontSize: 12 }}>
-            💬 Comment ({post.commentsCount})
-          </Text>
+          <View style={styles.btnContentRow}>
+            <Icon name="message" size={13} color={colors.text} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: colors.text, fontSize: 12 }}>
+              Comment ({post.commentsCount})
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -218,17 +239,23 @@ export const FeedPostCard: React.FC<FeedPostCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Share post by ${post.author}`}
         >
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 12 }}>
-            🔗 Share
-          </Text>
+          <View style={styles.btnContentRow}>
+            <Icon name="share" size={13} color={colors.textSubtle} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 12 }}>
+              Share
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       {/* Permanent Truth Disclosure */}
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-          ℹ️ {post.syntheticDisclosure}
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+            {post.syntheticDisclosure}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -272,6 +299,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: primitive.spacing[3],
   },
+  routeBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   mediaPlaceholderBox: {
     padding: primitive.spacing[4],
     borderRadius: primitive.radius.md,
@@ -280,11 +311,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: primitive.spacing[3],
   },
+  mediaNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   noticeBox: {
     padding: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     marginTop: primitive.spacing[3],
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -301,9 +340,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  btnContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cardFooter: {
     marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

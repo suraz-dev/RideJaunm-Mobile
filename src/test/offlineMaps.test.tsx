@@ -77,7 +77,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       fireEvent.press(staleTab);
     });
     expect(view.getByText('STALE (FIXTURE UPDATE PREVIEW)')).toBeTruthy();
-    expect(view.getByText(/⚠️ Stale Fixture State — Future Update Preview/)).toBeTruthy();
+    expect(view.getByText(/Stale Fixture State — Future Update Preview/)).toBeTruthy();
 
     // 4. Issues (Failed, Storage Full, Partial)
     const issuesTab = view.getByLabelText('Filter Issues (समस्याहरू)');
@@ -231,7 +231,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       fireEvent.press(settingsTab);
     });
 
-    expect(view.getByText(/Nepal Offline Map Packs — Fixture Preview/)).toBeTruthy();
+    expect(view.getByText(/Nepal Offline Map Packs/)).toBeTruthy();
     expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
     expect(view.getByText('DOWNLOADING PREVIEW (45%)')).toBeTruthy();
     expect(view.getByText('QUEUED (FIXTURE)')).toBeTruthy();

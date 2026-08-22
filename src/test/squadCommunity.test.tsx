@@ -111,7 +111,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       fireEvent.press(routesFilter);
     });
     expect(view.getByText('Prashant Lama')).toBeTruthy();
-    expect(view.getByText(/🗺️ Kulekhani – Sisneri – Hetauda/)).toBeTruthy();
+    expect(view.getByText(/Kulekhani – Sisneri – Hetauda/)).toBeTruthy();
   });
 
   test('toggles low-data mode and suppresses media placeholders with truth copy', async () => {
@@ -123,7 +123,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       fireEvent.press(routesFilter);
     });
 
-    expect(view.getByText(/📷 Kulekhani Reservoir Ridge/)).toBeTruthy();
+    expect(view.getByText(/Kulekhani Reservoir Ridge/)).toBeTruthy();
 
     // Toggle Low Data Mode ON
     const lowDataBtn = view.getByLabelText('Enable low-data mode preview');
@@ -132,9 +132,9 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     });
 
     expect(
-      view.getByText(/📡 Low-data fixture preview — no media loaded\./)
+      view.getByText(/Low-data mode — media omitted/)
     ).toBeTruthy();
-    expect(view.queryByText(/📷 Kulekhani Reservoir Ridge/)).toBeNull();
+    expect(view.queryByText(/Kulekhani Reservoir Ridge/)).toBeNull();
   });
 
   test('handles feed composer with permanent no-publish/no-queue truth copy', async () => {
@@ -157,7 +157,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     });
 
     expect(
-      view.getByText(/Like preview only · No outbox write or network sync/)
+      view.getByText(/Like preview only · No network sync/)
     ).toBeTruthy();
   });
 

@@ -148,7 +148,7 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     expect(view.getByText('No ride history recorded')).toBeTruthy();
     expect(
       view.getByText(
-        /Empty history fixture state · Completed rides will appear here once live recording capabilities are added\./
+        /Empty history state · Completed rides will appear here once recording capabilities are active\./
       )
     ).toBeTruthy();
   });

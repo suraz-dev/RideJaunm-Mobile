@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * FEED COMPOSER CARD (R13)
+ * FEED COMPOSER CARD (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -42,9 +43,12 @@ export const FeedComposerCard: React.FC = () => {
       accessibilityLabel="Simulated community post composer"
     >
       <View style={styles.headerRow}>
-        <Text variant="h3" style={{ color: colors.text }}>
-          Post an Update (नयाँ अपडेट)
-        </Text>
+        <View style={styles.headerTitleRow}>
+          <Icon name="edit" size={16} color={primitive.color.volt[400]} style={{ marginRight: 6 }} />
+          <Text variant="h3" style={{ color: colors.text }}>
+            Post an Update (नयाँ अपडेट)
+          </Text>
+        </View>
         <Badge label="LOCAL DRAFT" variant="neutral" size="sm" />
       </View>
 
@@ -77,9 +81,12 @@ export const FeedComposerCard: React.FC = () => {
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {publishNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.semantic.warning} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
+              {publishNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -97,16 +104,22 @@ export const FeedComposerCard: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel="Publish post preview"
         >
-          <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 12, fontWeight: '700' }}>
-            PUBLISH PREVIEW
-          </Text>
+          <View style={styles.publishBtnRow}>
+            <Icon name="send" size={14} color={primitive.color.graphite[950]} style={{ marginRight: 6 }} strokeWidth={2.5} />
+            <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 12, fontWeight: '700' }}>
+              PUBLISH PREVIEW
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-          ℹ️ Component-local draft · No post was published or queued
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+            Component-local draft · No post was published or queued
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -125,6 +138,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: primitive.spacing[3],
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   textInput: {
     minHeight: 72,
     borderRadius: primitive.radius.md,
@@ -140,22 +157,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: primitive.spacing[3],
   },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
   publishBtn: {
     minHeight: 48,
-    minWidth: 140,
     paddingHorizontal: primitive.spacing[4],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  publishBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cardFooter: {
     marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

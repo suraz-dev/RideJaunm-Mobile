@@ -18,6 +18,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -134,9 +135,12 @@ export const StorageSummaryBar: React.FC<StorageSummaryBarProps> = ({
 
       {/* Permanent Truth Disclosure */}
       <View style={[styles.disclosureBox, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-          ℹ️ Pre-authored storage simulation · Does not read real device flash capacity.
-        </Text>
+        <View style={styles.disclosureRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+            Pre-authored storage simulation · Does not read real device flash capacity.
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -186,5 +190,9 @@ const styles = StyleSheet.create({
     marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  disclosureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

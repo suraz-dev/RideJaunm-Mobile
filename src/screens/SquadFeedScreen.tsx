@@ -1,15 +1,14 @@
 /**
  * ============================================================================
- * SQUAD, COMMUNITY FEED, AND CHAT SCREEN (R13)
+ * SQUAD, COMMUNITY FEED, AND CHAT SCREEN (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. 3 Primary internal tabs: Feed, Groups, and Chat using accessible tab semantics.
+ * 1. 3 Primary internal tabs: Feed, Groups, and Chat with vector icons.
  * 2. Feed tab: Post stream with Following/Nearby/Routes filters, low-data toggle, and local composer.
  * 3. Groups tab: Squad roster with qualified presence states and cache-only MapSurface preview.
  * 4. Chat tab: Group chat transcript with local message composer.
  * 5. Permanent synthetic preview disclaimers on every surface.
- * 6. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
  */
 
 import React, { useState, useMemo } from 'react';
@@ -21,6 +20,7 @@ import {
 } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
+import { Icon, IconName } from '../components/primitives/Icon';
 import { FeedPostCard } from '../components/squad/FeedPostCard';
 import { FeedComposerCard } from '../components/squad/FeedComposerCard';
 import { SquadRosterView } from '../components/squad/SquadRosterView';
@@ -50,10 +50,10 @@ export const SquadFeedScreen: React.FC = () => {
   const isOffline =
     connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
 
-  const primaryTabs: { tab: SquadPrimaryTab; label: string; labelNepali: string; icon: string }[] = [
-    { tab: 'feed', label: 'Feed', labelNepali: 'फिड', icon: '📰' },
-    { tab: 'groups', label: 'Groups', labelNepali: 'समूह', icon: '👥' },
-    { tab: 'chat', label: 'Chat', labelNepali: 'च्याट', icon: '💬' },
+  const primaryTabs: { tab: SquadPrimaryTab; label: string; labelNepali: string; icon: IconName }[] = [
+    { tab: 'feed', label: 'Feed', labelNepali: 'फिड', icon: 'file-text' },
+    { tab: 'groups', label: 'Groups', labelNepali: 'समूह', icon: 'users' },
+    { tab: 'chat', label: 'Chat', labelNepali: 'च्याट', icon: 'message' },
   ];
 
   const feedFilterTabs: { category: FeedFilterCategory; label: string; labelNepali: string }[] = [
@@ -108,7 +108,12 @@ export const SquadFeedScreen: React.FC = () => {
             },
           ]}
         >
-          <Badge label="OFFLINE MESH MODE" variant="warning" size="sm" />
+          <Badge
+            label="OFFLINE MESH MODE"
+            variant="warning"
+            size="sm"
+            icon={<Icon name="wifi-off" size={11} color={primitive.color.semantic.warning} />}
+          />
           <Text variant="bodySmall" style={{ color: colors.text, marginTop: 4, fontWeight: '600' }}>
             Operating in offline dead-zone / mesh mode.
           </Text>
@@ -142,16 +147,24 @@ export const SquadFeedScreen: React.FC = () => {
               accessibilityState={{ selected: isTabActive }}
               accessibilityLabel={`Select ${t.label} tab (${t.labelNepali})`}
             >
-              <Text
-                variant="bodySmall"
-                style={{
-                  color: isTabActive ? colors.text : colors.textMuted,
-                  fontWeight: isTabActive ? '700' : '500',
-                  fontSize: 12,
-                }}
-              >
-                {t.icon} {t.label}
-              </Text>
+              <View style={styles.primaryTabRow}>
+                <Icon
+                  name={t.icon}
+                  size={14}
+                  color={isTabActive ? primitive.color.volt[400] : colors.textMuted}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  variant="bodySmall"
+                  style={{
+                    color: isTabActive ? colors.text : colors.textMuted,
+                    fontWeight: isTabActive ? '700' : '500',
+                    fontSize: 12,
+                  }}
+                >
+                  {t.label}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -214,9 +227,17 @@ export const SquadFeedScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel={isLowDataMode ? 'Disable low-data mode preview' : 'Enable low-data mode preview'}
             >
-              <Text variant="mono" style={{ color: isLowDataMode ? primitive.color.volt[400] : colors.textSubtle, fontSize: 10, fontWeight: '700' }}>
-                {isLowDataMode ? '📡 Low Data: ON' : '📡 Low Data: OFF'}
-              </Text>
+              <View style={styles.lowDataRow}>
+                <Icon
+                  name="wifi-off"
+                  size={12}
+                  color={isLowDataMode ? primitive.color.volt[400] : colors.textSubtle}
+                  style={{ marginRight: 4 }}
+                />
+                <Text variant="mono" style={{ color: isLowDataMode ? primitive.color.volt[400] : colors.textSubtle, fontSize: 10, fontWeight: '700' }}>
+                  {isLowDataMode ? 'Low Data: ON' : 'Low Data: OFF'}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -295,8 +316,8 @@ const styles = StyleSheet.create({
   },
   primaryTablist: {
     flexDirection: 'row',
-    borderRadius: primitive.radius.lg,
-    padding: 3,
+    borderRadius: primitive.radius.md,
+    padding: 2,
     borderWidth: 1,
     marginBottom: primitive.spacing[4],
   },
@@ -305,8 +326,12 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: primitive.radius.md,
+    borderRadius: primitive.radius.sm,
     borderWidth: 1.5,
+  },
+  primaryTabRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tabContentSection: {
     marginBottom: primitive.spacing[4],
@@ -339,6 +364,10 @@ const styles = StyleSheet.create({
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lowDataRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   postsList: {

@@ -24,6 +24,7 @@ import {
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { useAppState } from '../../state/AppStateContext';
 import { ThemeMode, primitive } from '../../design/tokens';
@@ -330,7 +331,7 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
       {/* 5. Offline Region Packs (Fixture Preview) */}
       <View style={styles.sectionHeaderRow}>
         <Text variant="h3" style={[styles.sectionHeader, { color: colors.text }]}>
-          Nepal Offline Map Packs — Fixture Preview ({offlineRegions.length})
+          Nepal Offline Map Packs ({offlineRegions.length})
         </Text>
         <TouchableOpacity
           style={styles.manageBtn}
@@ -339,9 +340,12 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Open offline region manager"
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            MANAGE ➔
-          </Text>
+          <View style={styles.manageBtnRow}>
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700', marginRight: 4 }}>
+              MANAGE
+            </Text>
+            <Icon name="arrow-right" size={11} color={primitive.color.cyan[400]} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -443,9 +447,12 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
 
       {/* Permanent Truth Disclosure */}
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
-          ℹ️ Local preview preferences · Changes are not saved to persistent storage
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
+            Local preview preferences · Changes are not saved to persistent storage
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -548,5 +555,14 @@ const styles = StyleSheet.create({
   cardFooter: {
     paddingTop: primitive.spacing[3],
     borderTopWidth: 0.5,
+  },
+  manageBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

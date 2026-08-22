@@ -17,6 +17,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { FixtureSquadGroup, FixtureSquadPresence } from '../../domain/squadCommunity';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { MapSurface } from '../map/MapSurface';
 import { MarkerLayer } from '../map/MarkerLayer';
 import { MapRenderInput } from '../../domain/map';
@@ -236,9 +237,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Call ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  📞 Call (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="mic" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Call (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -248,9 +252,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Ping ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  📍 Ping (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="map-pin" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Ping (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -260,16 +267,22 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Navigate to ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  🧭 Navigate (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="navigation" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Navigate (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
             <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
-                ℹ️ {member.syntheticDisclosure}
-              </Text>
+              <View style={styles.footerRow}>
+                <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
+                  {member.syntheticDisclosure}
+                </Text>
+              </View>
             </View>
           </View>
         ))}
@@ -366,5 +379,13 @@ const styles = StyleSheet.create({
     marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[1],
     borderTopWidth: 0.5,
+  },
+  actionBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

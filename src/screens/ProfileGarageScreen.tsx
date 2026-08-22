@@ -1,28 +1,27 @@
 /**
  * ============================================================================
- * PROFILE, GARAGE, HISTORY, AND SETTINGS SCREEN (R14)
+ * PROFILE, GARAGE, HISTORY, AND SETTINGS SCREEN (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. 4 Accessible inner tabs: Profile, Garage, History, and Settings.
+ * 1. 4 Accessible inner tabs: Profile, Garage, History, and Settings with vector icons.
  * 2. Local language preview selection (English, Nepali, Hindi) updating local copy.
  * 3. Calendar display selection (AD / BS) using pre-authored date strings.
  * 4. Integration with offline maps region manager.
  * 5. Permanent synthetic preview disclosures on every surface.
- * 6. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
  */
 
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
+import { Icon, IconName } from '../components/primitives/Icon';
 import { RiderProfileView } from '../components/profile/RiderProfileView';
 import { GarageVehiclesView } from '../components/profile/GarageVehiclesView';
 import { RideHistoryListView } from '../components/profile/RideHistoryListView';
 import { SettingsLocaleView } from '../components/profile/SettingsLocaleView';
 import { OfflineMapsScreen } from './OfflineMapsScreen';
 import { useTheme } from '../design/ThemeProvider';
-import { useAppState } from '../state/AppStateContext';
 import { primitive } from '../design/tokens';
 import {
   AppPreviewLanguage,
@@ -45,11 +44,11 @@ export const ProfileGarageScreen: React.FC = () => {
   const [calendarSystem, setCalendarSystem] = useState<CalendarSystemPreview>('AD');
   const [showOfflineManager, setShowOfflineManager] = useState(false);
 
-  const tabs: { tab: ProfileInnerTab; label: string; labelNepali: string; icon: string }[] = [
-    { tab: 'profile', label: 'Profile', labelNepali: 'प्रोफाइल', icon: '👤' },
-    { tab: 'garage', label: 'Garage', labelNepali: 'ग्यारेज', icon: '🏍️' },
-    { tab: 'history', label: 'History', labelNepali: 'इतिहास', icon: '📜' },
-    { tab: 'settings', label: 'Settings', labelNepali: 'सेटिङ', icon: '⚙️' },
+  const tabs: { tab: ProfileInnerTab; label: string; labelNepali: string; icon: IconName }[] = [
+    { tab: 'profile', label: 'Profile', labelNepali: 'प्रोफाइल', icon: 'user' },
+    { tab: 'garage', label: 'Garage', labelNepali: 'ग्यारेज', icon: 'bike' },
+    { tab: 'history', label: 'History', labelNepali: 'इतिहास', icon: 'route' },
+    { tab: 'settings', label: 'Settings', labelNepali: 'सेटिङ', icon: 'settings' },
   ];
 
   if (showOfflineManager) {
@@ -74,7 +73,7 @@ export const ProfileGarageScreen: React.FC = () => {
           ? 'स्थानीय राइडर प्रोफाइल, ग्यारेज, सवारी इतिहास र पूर्वावलोकन सेटिङ।'
           : language === 'hi'
           ? 'स्थानीय राइडर प्रोफ़ाइल, गैरेज, राइड इतिहास और पूर्वावलोकन सेटिंग्स।'
-          : 'Simulated rider identity, garage fleet, ride history, and locale settings.'}
+          : 'Rider identity, garage fleet, ride history, and locale preferences.'}
       </Text>
 
       {/* Top Synthetic Preview Disclaimer */}
@@ -117,16 +116,24 @@ export const ProfileGarageScreen: React.FC = () => {
               accessibilityState={{ selected: isTabActive }}
               accessibilityLabel={`Select ${t.label} tab (${t.labelNepali})`}
             >
-              <Text
-                variant="bodySmall"
-                style={{
-                  color: isTabActive ? colors.text : colors.textMuted,
-                  fontWeight: isTabActive ? '700' : '500',
-                  fontSize: 11,
-                }}
-              >
-                {t.icon} {t.label}
-              </Text>
+              <View style={styles.tabBtnRow}>
+                <Icon
+                  name={t.icon}
+                  size={13}
+                  color={isTabActive ? primitive.color.volt[400] : colors.textMuted}
+                  style={{ marginRight: 4 }}
+                />
+                <Text
+                  variant="bodySmall"
+                  style={{
+                    color: isTabActive ? colors.text : colors.textMuted,
+                    fontWeight: isTabActive ? '700' : '500',
+                    fontSize: 11,
+                  }}
+                >
+                  {t.label}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -159,7 +166,7 @@ export const ProfileGarageScreen: React.FC = () => {
         />
       )}
 
-      {/* TAB 4: SETTINGS & LOCALE */}
+      {/* TAB 4: SETTINGS */}
       {activeTab === 'settings' && (
         <SettingsLocaleView
           currentLanguage={language}
@@ -194,8 +201,8 @@ const styles = StyleSheet.create({
   },
   tablist: {
     flexDirection: 'row',
-    borderRadius: primitive.radius.lg,
-    padding: 3,
+    borderRadius: primitive.radius.md,
+    padding: 2,
     borderWidth: 1,
     marginBottom: primitive.spacing[4],
   },
@@ -204,7 +211,11 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: primitive.radius.md,
-    borderWidth: 1.5,
+    borderRadius: primitive.radius.sm,
+    borderWidth: 1,
+  },
+  tabBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
