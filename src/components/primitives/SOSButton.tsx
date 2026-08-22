@@ -208,7 +208,7 @@ export const SOSButton: React.FC<SOSButtonProps> = ({
               accessibilityLabel="Confirm and arm simulated SOS"
             >
               <Text variant="mono" style={{ color: primitive.color.snow[0], fontSize: 13, fontWeight: '700' }}>
-                ✓ CONFIRM & ARM SIMULATED SOS
+                CONFIRM & ARM SIMULATED SOS
               </Text>
             </TouchableOpacity>
 
@@ -220,7 +220,7 @@ export const SOSButton: React.FC<SOSButtonProps> = ({
               accessibilityLabel="Cancel accessible arming"
             >
               <Text variant="mono" style={{ color: primitive.color.snow[300], fontSize: 12, fontWeight: '600' }}>
-                ✕ CANCEL (रद्द गर्नुहोस्)
+                CANCEL (रद्द गर्नुहोस्)
               </Text>
             </TouchableOpacity>
           </View>

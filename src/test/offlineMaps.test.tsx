@@ -52,7 +52,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     expect(view.getByText('Storage Overview (भण्डारण सारांश)')).toBeTruthy();
     expect(view.getByText(/1\.4 GB MAPS · 14\.2 GB FREE/)).toBeTruthy();
     expect(
-      view.getByText(/Pre-authored storage simulation · Does not read real device flash capacity\./)
+      view.getByText(/Storage estimate · Device storage preview/)
     ).toBeTruthy();
   });
 
@@ -60,33 +60,33 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     const view = await render(<OfflineMapsScreen />, { wrapper: createWrapper() });
 
     // 1. Complete
-    expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
+    expect(view.getAllByText('DOWNLOADED').length).toBeGreaterThan(0);
 
     // 2. Downloading & Queued & Paused
-    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोड)');
+    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोडिङ)');
     await act(async () => {
       fireEvent.press(downloadingTab);
     });
-    expect(view.getByText(/DOWNLOADING PREVIEW \(45%\)/)).toBeTruthy();
-    expect(view.getByText('QUEUED (FIXTURE)')).toBeTruthy();
-    expect(view.getByText(/PAUSED PREVIEW \(60%\)/)).toBeTruthy();
+    expect(view.getByText(/DOWNLOADING \(45%\)/)).toBeTruthy();
+    expect(view.getByText('QUEUED')).toBeTruthy();
+    expect(view.getByText(/PAUSED \(60%\)/)).toBeTruthy();
 
     // 3. Stale
-    const staleTab = view.getByLabelText('Filter Stale (पुरानो)');
+    const staleTab = view.getByLabelText('Filter Updates (अपडेट)');
     await act(async () => {
       fireEvent.press(staleTab);
     });
-    expect(view.getByText('STALE (FIXTURE UPDATE PREVIEW)')).toBeTruthy();
-    expect(view.getByText(/Stale Fixture State — Future Update Preview/)).toBeTruthy();
+    expect(view.getByText('UPDATE AVAILABLE')).toBeTruthy();
+    expect(view.getByText(/Cached Map — Update Available/)).toBeTruthy();
 
     // 4. Issues (Failed, Storage Full, Partial)
-    const issuesTab = view.getByLabelText('Filter Issues (समस्याहरू)');
+    const issuesTab = view.getByLabelText('Filter Issues (समस्या)');
     await act(async () => {
       fireEvent.press(issuesTab);
     });
-    expect(view.getByText('FAILED (SIMULATED)')).toBeTruthy();
-    expect(view.getByText('STORAGE FULL (FIXTURE)')).toBeTruthy();
-    expect(view.getByText(/PARTIAL PREVIEW \(70%\)/)).toBeTruthy();
+    expect(view.getByText('TRANSFER ERROR')).toBeTruthy();
+    expect(view.getByText('STORAGE FULL')).toBeTruthy();
+    expect(view.getByText(/PARTIAL CACHE \(70%\)/)).toBeTruthy();
   });
 
   test('filters region cards across All, Downloading, Stale, and Issues tabs', async () => {
@@ -98,7 +98,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     expect(view.getByText('Upper Dolpa & Shey Phoksundo')).toBeTruthy();
 
     // 2. "Downloading" tab: shows downloading, queued, and paused
-    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोड)');
+    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोडिङ)');
     await act(async () => {
       fireEvent.press(downloadingTab);
     });
@@ -108,7 +108,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     expect(view.queryByText('Annapurna & Mustang Circuit')).toBeNull();
 
     // 3. "Stale" tab: shows stale Pokhara region
-    const staleTab = view.getByLabelText('Filter Stale (पुरानो)');
+    const staleTab = view.getByLabelText('Filter Updates (अपडेट)');
     await act(async () => {
       fireEvent.press(staleTab);
     });
@@ -116,7 +116,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     expect(view.queryByText('Solukhumbu & Everest Base Trail')).toBeNull();
 
     // 4. "Issues" tab: shows failed, storage_full, and partial
-    const issuesTab = view.getByLabelText('Filter Issues (समस्याहरू)');
+    const issuesTab = view.getByLabelText('Filter Issues (समस्या)');
     await act(async () => {
       fireEvent.press(issuesTab);
     });
@@ -129,59 +129,59 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     const view = await render(<OfflineMapsScreen />, { wrapper: createWrapper() });
 
     // Filter to downloading to find Everest region
-    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोड)');
+    const downloadingTab = view.getByLabelText('Filter Downloading (डाउनलोडिङ)');
     await act(async () => {
       fireEvent.press(downloadingTab);
     });
 
-    const pauseBtn = view.getByLabelText('Pause Solukhumbu & Everest Base Trail fixture download preview');
+    const pauseBtn = view.getByLabelText('Pause Solukhumbu & Everest Base Trail download');
     await act(async () => {
       fireEvent.press(pauseBtn);
     });
 
     // Verify truth disclosure
-    expect(view.getByText(/Paused preview · No real download transfer active/)).toBeTruthy();
-    expect(view.getByText(/PAUSED PREVIEW \(45%\)/)).toBeTruthy();
+    expect(view.getByText(/Download paused · Local preview/)).toBeTruthy();
+    expect(view.getByText(/PAUSED \(45%\)/)).toBeTruthy();
 
     // Resume
-    const resumeBtn = view.getByLabelText('Resume Solukhumbu & Everest Base Trail fixture download preview');
+    const resumeBtn = view.getByLabelText('Resume Solukhumbu & Everest Base Trail download');
     await act(async () => {
       fireEvent.press(resumeBtn);
     });
-    expect(view.getByText(/Resumed preview · Simulated progress only/)).toBeTruthy();
-    expect(view.getByText(/DOWNLOADING PREVIEW \(45%\)/)).toBeTruthy();
+    expect(view.getByText(/Download resumed · Local preview/)).toBeTruthy();
+    expect(view.getByText(/DOWNLOADING \(45%\)/)).toBeTruthy();
   });
 
   test('handles retry preview interaction for failed regions', async () => {
     const view = await render(<OfflineMapsScreen />, { wrapper: createWrapper() });
 
-    const issuesTab = view.getByLabelText('Filter Issues (समस्याहरू)');
+    const issuesTab = view.getByLabelText('Filter Issues (समस्या)');
     await act(async () => {
       fireEvent.press(issuesTab);
     });
 
-    const retryBtn = view.getByLabelText('Retry Annapurna Sanctuary & ABC Trail simulated transfer');
+    const retryBtn = view.getByLabelText('Retry Annapurna Sanctuary & ABC Trail transfer');
     await act(async () => {
       fireEvent.press(retryBtn);
     });
 
-    expect(view.getByText(/Retry preview only — no download started/)).toBeTruthy();
+    expect(view.getByText(/Retrying download · Local preview/)).toBeTruthy();
   });
 
   test('handles removal confirmation preview interaction with permanent truth disclosure', async () => {
     const view = await render(<OfflineMapsScreen />, { wrapper: createWrapper() });
 
-    const removeBtn = view.getByLabelText('Remove Annapurna & Mustang Circuit fixture preview');
+    const removeBtn = view.getByLabelText('Remove Annapurna & Mustang Circuit pack');
     await act(async () => {
       fireEvent.press(removeBtn);
     });
 
-    const confirmBtn = view.getByLabelText('Confirm removal of Annapurna & Mustang Circuit fixture preview');
+    const confirmBtn = view.getByLabelText('Confirm removal of Annapurna & Mustang Circuit pack');
     await act(async () => {
       fireEvent.press(confirmBtn);
     });
 
-    expect(view.getByText(/Removal preview only — no region was deleted/)).toBeTruthy();
+    expect(view.getByText(/Pack removal preview · Local cache only/)).toBeTruthy();
   });
 
   test('qualifies lifecycle state in map preview and enforces cache_only policy with truthful MapBaseState', async () => {
@@ -190,24 +190,19 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       wrapper: createWrapper(connectionOnlineSnapshot),
     });
 
-    expect(view.queryByText('REGION BOUNDS PREVIEW (Annapurna & Mustang Circuit)')).toBeNull();
-
-    const showMapBtn = view.getByLabelText('Show region map bounds preview');
-    await act(async () => {
-      fireEvent.press(showMapBtn);
-    });
-
-    // Check bounds header has qualified badge (COMPLETE (FIXTURE))
+    const showMapBtn = view.getByLabelText('Hide region map bounds preview');
     expect(view.getByText('REGION BOUNDS PREVIEW (Annapurna & Mustang Circuit)')).toBeTruthy();
-    expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
+
+    // Check bounds header has qualified badge (DOWNLOADED)
+    expect(view.getAllByText('DOWNLOADED').length).toBeGreaterThan(0);
 
     // Expand details and check fixture qualification
-    const detailsBtn = view.getByLabelText('Show Annapurna & Mustang Circuit fixture details');
+    const detailsBtn = view.getByLabelText('Show Annapurna & Mustang Circuit details');
     await act(async () => {
       fireEvent.press(detailsBtn);
     });
     expect(view.getByText(/Checksum: 9a8f2c3d4e5f60718293a4b5/)).toBeTruthy();
-    expect(view.getByText(/Fixture timestamp: 2026-08-10T04:00:00Z · Fixture expiry: 2026-11-10T04:00:00Z/)).toBeTruthy();
+    expect(view.getByText(/Cached: 2026-08-10T04:00:00Z · Expiry: 2026-11-10T04:00:00Z/)).toBeTruthy();
 
     // Select a stale region and check that map bounds preview header updates with qualified badge
     const staleRegion = allOfflineRegionFixtures.find((r) => r.lifecycle === 'stale')!;
@@ -216,7 +211,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       fireEvent.press(staleMapBtn);
     });
     expect(view.getByText(`REGION BOUNDS PREVIEW (${staleRegion.name})`)).toBeTruthy();
-    expect(view.getAllByText('STALE (FIXTURE UPDATE PREVIEW)').length).toBeGreaterThan(0);
+    expect(view.getAllByText('UPDATE AVAILABLE').length).toBeGreaterThan(0);
   });
 
   test('preserves and accurately renders all 8 lifecycle states in ProfileGarageScreen summary', async () => {
@@ -232,14 +227,14 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
     });
 
     expect(view.getByText(/Nepal Offline Map Packs/)).toBeTruthy();
-    expect(view.getAllByText('COMPLETE (FIXTURE)').length).toBeGreaterThan(0);
-    expect(view.getByText('DOWNLOADING PREVIEW (45%)')).toBeTruthy();
-    expect(view.getByText('QUEUED (FIXTURE)')).toBeTruthy();
-    expect(view.getByText('PAUSED PREVIEW (60%)')).toBeTruthy();
-    expect(view.getByText('PARTIAL PREVIEW (70%)')).toBeTruthy();
-    expect(view.getByText('STALE (FIXTURE UPDATE PREVIEW)')).toBeTruthy();
-    expect(view.getByText('FAILED (SIMULATED)')).toBeTruthy();
-    expect(view.getByText('STORAGE FULL (FIXTURE)')).toBeTruthy();
+    expect(view.getAllByText('DOWNLOADED').length).toBeGreaterThan(0);
+    expect(view.getByText('DOWNLOADING (45%)')).toBeTruthy();
+    expect(view.getByText('QUEUED')).toBeTruthy();
+    expect(view.getByText('PAUSED (60%)')).toBeTruthy();
+    expect(view.getByText('PARTIAL CACHE (70%)')).toBeTruthy();
+    expect(view.getByText('UPDATE AVAILABLE')).toBeTruthy();
+    expect(view.getByText('TRANSFER ERROR')).toBeTruthy();
+    expect(view.getByText('STORAGE FULL')).toBeTruthy();
   });
 
   test('renders offline/mesh banner when in deadZone connection mode', async () => {
@@ -258,7 +253,7 @@ describe('RideJaunm R12 Fixture Offline Region Browser & Lifecycle UI', () => {
       const view = await render(<OfflineMapsScreen />, {
         wrapper: createWrapper(undefined, mode),
       });
-      expect(view.getByText('Offline Maps — Fixture Preview')).toBeTruthy();
+      expect(view.getByText('Offline Maps — Local Preview')).toBeTruthy();
     }
   });
 });

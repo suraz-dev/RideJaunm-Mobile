@@ -196,7 +196,7 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
         <View style={styles.disclosureRow}>
           <Icon name="info" size={11} color={colors.textSubtle} style={{ marginRight: 4 }} />
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
-            No invitation was sent · Synthetic roster preview only
+            No invitation was sent · Squad roster preview only
           </Text>
         </View>
       </View>

@@ -70,7 +70,7 @@ export const primaryRiderProfileFixture: FixtureRiderProfile = {
     },
   ],
   sourceVersion: 'NP-PROFILE-2026.08.15',
-  syntheticDisclosure: 'Synthetic profile preview · Not a registered backend account',
+  syntheticDisclosure: 'Local profile preview · Offline rider instrument',
 };
 
 export const allFixtureMotorcycles: FixtureMotorcycle[] = [
@@ -88,7 +88,7 @@ export const allFixtureMotorcycles: FixtureMotorcycle[] = [
     lastServiceDateBs: '2083-04-04',
     notes: 'Fresh fork oil, heavy-duty aluminum bash plate installed.',
     sourceVersion: 'NP-GARAGE-2026.08.15',
-    syntheticDisclosure: 'Pre-authored vehicle fixture · Not connected to vehicle telemetry',
+    syntheticDisclosure: 'Local vehicle profile · Fleet maintained offline',
   },
   {
     id: 'moto-ktm-390',
@@ -104,7 +104,7 @@ export const allFixtureMotorcycles: FixtureMotorcycle[] = [
     lastServiceDateBs: '2082-07-24',
     notes: 'Maintenance interval overdue · Stale fixture estimate.',
     sourceVersion: 'NP-GARAGE-2026.08.15',
-    syntheticDisclosure: 'Pre-authored vehicle fixture · Stale/unknown maintenance state',
+    syntheticDisclosure: 'Local vehicle profile · Maintenance service due',
   },
 ];
 
@@ -124,7 +124,7 @@ export const allFixtureRideHistory: FixtureRideHistoryItem[] = [
     routeMode: 'curvy',
     state: 'cached',
     sourceVersion: 'NP-HISTORY-2026.08.15',
-    syntheticDisclosure: 'Pre-authored ride history · Not GPS recorded',
+    syntheticDisclosure: 'Local ride record · Completed ride cache',
   },
   {
     id: 'ride-hist-02',
@@ -141,7 +141,7 @@ export const allFixtureRideHistory: FixtureRideHistoryItem[] = [
     routeMode: 'supercurvy',
     state: 'cached',
     sourceVersion: 'NP-HISTORY-2026.08.15',
-    syntheticDisclosure: 'Pre-authored ride history · Not GPS recorded',
+    syntheticDisclosure: 'Local ride record · Completed ride cache',
   },
   {
     id: 'ride-hist-03',
@@ -158,7 +158,7 @@ export const allFixtureRideHistory: FixtureRideHistoryItem[] = [
     routeMode: 'supercurvy',
     state: 'stale',
     sourceVersion: 'NP-HISTORY-2026.08.15',
-    syntheticDisclosure: 'Pre-authored ride history · Stale fixture record',
+    syntheticDisclosure: 'Local ride record · Archived route history',
   },
 ];
 

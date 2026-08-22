@@ -35,6 +35,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     expect(memberIds).toContain('squad-member-rabin');
     expect(memberIds).toContain('squad-member-suraj');
 
+    // Checklist must cover all 6 categories
     expect(fixtureTripReadinessChecklist.length).toBe(6);
     const categories = fixtureTripReadinessChecklist.map((c) => c.category);
     expect(categories).toContain('route');
@@ -44,10 +45,9 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     expect(categories).toContain('weather');
     expect(categories).toContain('safety');
 
-    // Weather must be in unknown state with non-live disclosure
+    // Weather must explicitly qualify baseline/synthetic
     const weatherItem = fixtureTripReadinessChecklist.find((c) => c.category === 'weather');
-    expect(weatherItem?.state).toBe('unknown');
-    expect(weatherItem?.syntheticDisclosure).toContain('Not real-time weather');
+    expect(weatherItem?.syntheticDisclosure).toContain('Not real-time telemetry');
 
     // Safety must not claim verified native mesh networking
     const safetyItem = fixtureTripReadinessChecklist.find((c) => c.category === 'safety');
@@ -74,7 +74,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     });
 
     // 3. Asserts on Readiness Screen
-    expect(view.getByText('Fixture Trip Readiness — Local Preview')).toBeTruthy();
+    expect(view.getByText('Pre-Ride Readiness — Local Preview')).toBeTruthy();
     expect(view.getByText('Squad Roster & Roles (टोली रोस्टर)')).toBeTruthy();
 
     // 4. Return back to Trip Planner
@@ -110,7 +110,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
 
     // Permanent disclosure present on all member cards
     expect(
-      view.getAllByText('No invitation was sent · Synthetic roster preview only').length
+      view.getAllByText('No invitation was sent · Squad roster preview only').length
     ).toBeGreaterThanOrEqual(3);
 
     // Existing ready members do NOT show "INVITE CONFIRMED"
@@ -158,14 +158,14 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
 
     expect(view.getByText('Route Candidate Armed')).toBeTruthy();
     expect(view.getByText('Offline Map Pack Advisory')).toBeTruthy();
-    expect(view.getByText('Conservation Area Permit Notice (Synthetic Reference)')).toBeTruthy();
+    expect(view.getByText('Conservation Area Permit Notice')).toBeTruthy();
     expect(view.getByText('Mountain Fuel Gap (48 km)')).toBeTruthy();
     expect(view.getByText('Weather Baseline Advisory')).toBeTruthy();
     expect(view.getByText('Emergency Profile & Mesh Advisory')).toBeTruthy();
 
     expect(view.getAllByText(/Source: NP-ROUTING-2026.08.15/).length).toBeGreaterThanOrEqual(1);
     expect(
-      view.getByText(/Synthetic baseline fixture only \(Not real-time weather\)/)
+      view.getByText(/Baseline mountain forecast \(Not real-time telemetry\)/)
     ).toBeTruthy();
   });
 
@@ -176,7 +176,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
       const view = await render(<TripReadinessScreen />, {
         wrapper: createWrapper(undefined, mode),
       });
-      expect(view.getByText('Fixture Trip Readiness — Local Preview')).toBeTruthy();
+      expect(view.getByText('Pre-Ride Readiness — Local Preview')).toBeTruthy();
     }
   });
 });

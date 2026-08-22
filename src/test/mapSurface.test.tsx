@@ -35,7 +35,7 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
 
     expect(view.getByText('STALE MAP CACHE')).toBeTruthy();
     expect(view.getByText(/OSM-NP-2026.05.10/)).toBeTruthy();
-    expect(view.getByText(/Simulated stale map fixture/)).toBeTruthy();
+    expect(view.getByText(/Cached map expired/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
@@ -61,8 +61,8 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
       </ThemeProvider>
     );
 
-    expect(view.getByText('INITIALIZING FIXTURE MAP SURFACE...')).toBeTruthy();
-    expect(view.getByText(/Loading synthetic topographic contours/)).toBeTruthy();
+    expect(view.getByText('INITIALIZING OFFLINE MAP...')).toBeTruthy();
+    expect(view.getByText(/Loading offline topographic contours/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 
@@ -73,9 +73,9 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
       </ThemeProvider>
     );
 
-    expect(view.getByText('SIMULATED UNCACHED SECTOR')).toBeTruthy();
+    expect(view.getByText('UNCACHED SECTOR')).toBeTruthy();
     expect(
-      view.getByText(/Demonstrates unavailable sector state for Upper Dolpa & Shey Phoksundo Corridor/)
+      view.getByText(/Offline map sector missing for Upper Dolpa & Shey Phoksundo Corridor/)
     ).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
@@ -90,9 +90,9 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
     );
 
     expect(view.getByText('RENDER FAULT')).toBeTruthy();
-    expect(view.getByText('Simulated Render Fault')).toBeTruthy();
+    expect(view.getByText('Render Fault')).toBeTruthy();
 
-    const retryBtn = view.getByText('RETRY FIXTURE RENDER');
+    const retryBtn = view.getByText('RETRY MAP RENDER');
     expect(retryBtn).toBeTruthy();
 
     fireEvent.press(retryBtn);

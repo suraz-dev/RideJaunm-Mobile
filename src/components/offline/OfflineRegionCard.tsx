@@ -61,42 +61,42 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
   const getLifecycleLabel = (lifecycle: OfflinePackLifecycle) => {
     switch (lifecycle) {
       case 'complete':
-        return 'COMPLETE (FIXTURE)';
+        return 'DOWNLOADED';
       case 'downloading':
-        return `DOWNLOADING PREVIEW (${region.progressPercentage}%)`;
+        return `DOWNLOADING (${region.progressPercentage}%)`;
       case 'queued':
-        return 'QUEUED (FIXTURE)';
+        return 'QUEUED';
       case 'paused':
-        return `PAUSED PREVIEW (${region.progressPercentage}%)`;
+        return `PAUSED (${region.progressPercentage}%)`;
       case 'partial':
-        return `PARTIAL PREVIEW (${region.progressPercentage}%)`;
+        return `PARTIAL CACHE (${region.progressPercentage}%)`;
       case 'stale':
-        return 'STALE (FIXTURE UPDATE PREVIEW)';
+        return 'UPDATE AVAILABLE';
       case 'failed':
-        return 'FAILED (SIMULATED)';
+        return 'TRANSFER ERROR';
       case 'storage_full':
-        return 'STORAGE FULL (FIXTURE)';
+        return 'STORAGE FULL';
     }
   };
 
   const handlePauseResume = () => {
     if (region.lifecycle === 'downloading') {
       onLifecycleChange?.(region.id, 'paused');
-      onActionNotice?.('Paused preview · No real download transfer active');
+      onActionNotice?.('Download paused · Local preview');
     } else if (region.lifecycle === 'paused') {
       onLifecycleChange?.(region.id, 'downloading');
-      onActionNotice?.('Resumed preview · Simulated progress only');
+      onActionNotice?.('Download resumed · Local preview');
     }
   };
 
   const handleRetry = () => {
     onLifecycleChange?.(region.id, 'downloading');
-    onActionNotice?.('Retry preview only — no download started');
+    onActionNotice?.('Retrying download · Local preview');
   };
 
   const handleConfirmRemove = () => {
     setIsPendingRemove(false);
-    onActionNotice?.('Removal preview only — no region was deleted');
+    onActionNotice?.('Pack removal preview · Local cache only');
   };
 
   return (
@@ -193,11 +193,11 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
           <View style={styles.warningTitleRow}>
             <Icon name="alert-triangle" size={13} color={primitive.color.semantic.warning} style={{ marginRight: 6 }} />
             <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-              Stale Fixture State — Future Update Preview
+              Cached Map — Update Available
             </Text>
           </View>
           <Text variant="mono" style={{ color: colors.text, fontSize: 11, marginTop: 2 }}>
-            Pack expired {region.expiryUtc}. In future builds, tapping update will fetch diff delta.
+            Pack timestamp {region.lastUpdatedUtc.substring(0, 10)}. New road and terrain delta available.
           </Text>
         </View>
       )}
@@ -215,7 +215,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
           <View style={styles.warningTitleRow}>
             <Icon name="alert-triangle" size={13} color={primitive.color.semantic.warning} style={{ marginRight: 6 }} />
             <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-              {region.lifecycle === 'storage_full' ? 'Storage Pressure Warning' : 'Simulated Transfer Fault'}
+              {region.lifecycle === 'storage_full' ? 'Storage Full' : 'Transfer Error'}
             </Text>
           </View>
           <Text variant="mono" style={{ color: colors.text, fontSize: 11, marginTop: 2 }}>
@@ -234,7 +234,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             Bounds: [{region.bounds.minLat.toFixed(2)}, {region.bounds.minLng.toFixed(2)}] to [{region.bounds.maxLat.toFixed(2)}, {region.bounds.maxLng.toFixed(2)}]
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Fixture timestamp: {region.lastUpdatedUtc} · Fixture expiry: {region.expiryUtc}
+            Cached: {region.lastUpdatedUtc} · Expiry: {region.expiryUtc}
           </Text>
         </View>
       )}
@@ -247,7 +247,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
           onPress={() => setIsExpanded(!isExpanded)}
           accessible
           accessibilityRole="button"
-          accessibilityLabel={isExpanded ? `Hide ${region.name} fixture details` : `Show ${region.name} fixture details`}
+          accessibilityLabel={isExpanded ? `Hide ${region.name} details` : `Show ${region.name} details`}
         >
           <View style={styles.actionBtnRow}>
             <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={12} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
@@ -284,8 +284,8 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={
               region.lifecycle === 'downloading'
-                ? `Pause ${region.name} fixture download preview`
-                : `Resume ${region.name} fixture download preview`
+                ? `Pause ${region.name} download`
+                : `Resume ${region.name} download`
             }
           >
             <Text variant="mono" style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
@@ -301,7 +301,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             onPress={handleRetry}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`Retry ${region.name} simulated transfer`}
+            accessibilityLabel={`Retry ${region.name} transfer`}
           >
             <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
               Retry
@@ -316,7 +316,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             onPress={() => setIsPendingRemove(true)}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${region.name} fixture preview`}
+            accessibilityLabel={`Remove ${region.name} pack`}
           >
             <View style={styles.actionBtnRow}>
               <Icon name="x" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
@@ -339,7 +339,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
               onPress={handleConfirmRemove}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={`Confirm removal of ${region.name} fixture preview`}
+              accessibilityLabel={`Confirm removal of ${region.name} pack`}
             >
               <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
                 CONFIRM
@@ -371,7 +371,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
         <View style={styles.footerRow}>
           <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-            Simulated fixture pack · No device files or downloads performed
+            Local preview pack · No external network downloads
           </Text>
         </View>
       </View>

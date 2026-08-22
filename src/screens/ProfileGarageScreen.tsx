@@ -76,7 +76,7 @@ export const ProfileGarageScreen: React.FC = () => {
           : 'Rider identity, garage fleet, ride history, and locale preferences.'}
       </Text>
 
-      {/* Top Synthetic Preview Disclaimer */}
+      {/* Top Local Preview Disclaimer */}
       <View
         style={[
           styles.disclaimerBanner,
@@ -86,9 +86,9 @@ export const ProfileGarageScreen: React.FC = () => {
           },
         ]}
       >
-        <Badge label="SYNTHETIC PREVIEW" variant="neutral" size="sm" />
+        <Badge label="LOCAL PREVIEW" variant="neutral" size="sm" />
         <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-          Deterministic local fixtures · Not connected to backend user accounts or live telemetry.
+          Local profile preview · Not connected to cloud accounts or live telemetry.
         </Text>
       </View>
 

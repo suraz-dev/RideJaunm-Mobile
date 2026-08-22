@@ -65,7 +65,7 @@ export const StorageSummaryBar: React.FC<StorageSummaryBarProps> = ({
             {formatGb(mapPacksBytes)} GB MAPS · {formatGb(freeDeviceBytes)} GB FREE
           </Text>
         </View>
-        <Badge label="FIXTURE ESTIMATE" variant="neutral" size="sm" />
+        <Badge label="STORAGE ESTIMATE" variant="neutral" size="sm" />
       </View>
 
       {/* Segmented Visual Progress Bar */}
@@ -138,7 +138,7 @@ export const StorageSummaryBar: React.FC<StorageSummaryBarProps> = ({
         <View style={styles.disclosureRow}>
           <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-            Pre-authored storage simulation · Does not read real device flash capacity.
+            Storage estimate · Device storage preview
           </Text>
         </View>
       </View>

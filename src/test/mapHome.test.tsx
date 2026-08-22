@@ -160,7 +160,7 @@ describe('RideJaunm R9 Map Home & Local Ride Mode Lifecycle', () => {
 
     expect(view.getByText('GPS UNAVAILABLE')).toBeTruthy();
     expect(view.getByText('RENDER FAULT')).toBeTruthy();
-    expect(view.getByText('Simulated Render Fault')).toBeTruthy();
+    expect(view.getByText('Render Fault')).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 });

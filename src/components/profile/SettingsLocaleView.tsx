@@ -102,21 +102,21 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
   const getLifecycleBadge = (lifecycle: string, progressPercentage?: number) => {
     switch (lifecycle) {
       case 'complete':
-        return <Badge label="COMPLETE (FIXTURE)" variant="volt" size="sm" />;
+        return <Badge label="DOWNLOADED" variant="volt" size="sm" />;
       case 'downloading':
         return (
           <Badge
-            label={`DOWNLOADING PREVIEW (${progressPercentage ?? 45}%)`}
+            label={`DOWNLOADING (${progressPercentage ?? 45}%)`}
             variant="cyan"
             size="sm"
           />
         );
       case 'queued':
-        return <Badge label="QUEUED (FIXTURE)" variant="neutral" size="sm" />;
+        return <Badge label="QUEUED" variant="neutral" size="sm" />;
       case 'paused':
         return (
           <Badge
-            label={`PAUSED PREVIEW (${progressPercentage ?? 60}%)`}
+            label={`PAUSED (${progressPercentage ?? 60}%)`}
             variant="warning"
             size="sm"
           />
@@ -124,19 +124,19 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
       case 'partial':
         return (
           <Badge
-            label={`PARTIAL PREVIEW (${progressPercentage ?? 70}%)`}
+            label={`PARTIAL CACHE (${progressPercentage ?? 70}%)`}
             variant="warning"
             size="sm"
           />
         );
       case 'stale':
-        return <Badge label="STALE (FIXTURE UPDATE PREVIEW)" variant="warning" size="sm" />;
+        return <Badge label="UPDATE AVAILABLE" variant="warning" size="sm" />;
       case 'failed':
-        return <Badge label="FAILED (SIMULATED)" variant="warning" size="sm" />;
+        return <Badge label="TRANSFER ERROR" variant="warning" size="sm" />;
       case 'storage_full':
-        return <Badge label="STORAGE FULL (FIXTURE)" variant="warning" size="sm" />;
+        return <Badge label="STORAGE FULL" variant="warning" size="sm" />;
       default:
-        return <Badge label="FIXTURE PREVIEW" variant="neutral" size="sm" />;
+        return <Badge label="LOCAL CACHE" variant="neutral" size="sm" />;
     }
   };
 
@@ -157,9 +157,12 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {settingNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+              {settingNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -424,7 +427,7 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
               Background GPS Ride Logging
             </Text>
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-              Live background services & sharing are unavailable in this preview.
+              Live background services & sharing are offline in this preview.
             </Text>
           </View>
           <Switch value={false} disabled accessibilityLabel="Background GPS logging disabled" />
@@ -438,7 +441,7 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
               Mesh Radar Discovery Broadcast
             </Text>
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-              Native BLE radio discovery is unverified in this fixture preview.
+              Mesh radar discovery is offline in this preview.
             </Text>
           </View>
           <Switch value={false} disabled accessibilityLabel="Mesh radar discovery broadcast disabled" />
@@ -450,7 +453,7 @@ export const SettingsLocaleView: React.FC<SettingsLocaleViewProps> = ({
         <View style={styles.footerRow}>
           <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
-            Local preview preferences · Changes are not saved to persistent storage
+            Local preview preferences · Device storage offline
           </Text>
         </View>
       </View>
@@ -564,5 +567,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

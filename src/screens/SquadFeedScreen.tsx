@@ -81,7 +81,7 @@ export const SquadFeedScreen: React.FC = () => {
         Simulated trail reports, squad coordination, and group communication.
       </Text>
 
-      {/* Top Synthetic Preview Disclaimer */}
+      {/* Permanent Truth Disclosure Banner */}
       <View
         style={[
           styles.disclaimerBanner,
@@ -91,9 +91,9 @@ export const SquadFeedScreen: React.FC = () => {
           },
         ]}
       >
-        <Badge label="SYNTHETIC PREVIEW" variant="neutral" size="sm" />
+        <Badge label="LOCAL PREVIEW" variant="neutral" size="sm" />
         <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-          Deterministic local fixtures · No live location, chat delivery, media uploads, or remote tracking.
+          Local preview · No live location, chat delivery, media uploads, or remote tracking.
         </Text>
       </View>
 
@@ -118,7 +118,7 @@ export const SquadFeedScreen: React.FC = () => {
             Operating in offline dead-zone / mesh mode.
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Feed, squad, and chat are rendered from cached local fixtures. No remote data transfers active.
+            Feed, squad, and chat are rendered from local cache. No remote data transfers active.
           </Text>
         </View>
       )}

@@ -140,7 +140,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
 
       {/* Screen Title & Subtitle */}
       <Text variant="h1" style={{ color: colors.text }}>
-        Fixture Trip Readiness — Local Preview
+        Pre-Ride Readiness — Local Preview
       </Text>
       <Text variant="bodyMedium" muted style={styles.subtitle}>
         Pre-ride squad roster, role assignment, and multi-factor readiness verification.

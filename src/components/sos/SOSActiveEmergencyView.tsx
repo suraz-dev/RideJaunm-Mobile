@@ -126,7 +126,7 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
       {standDownNotice && (
         <View style={[styles.noticeBox, { borderColor: primitive.color.volt[400] }]}>
           <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
-            ✓ {standDownNotice}
+            {standDownNotice}
           </Text>
         </View>
       )}
@@ -203,7 +203,7 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
               zIndex: 2,
             }}
           >
-            {isHoldingStandDown ? 'HOLDING STAND DOWN...' : '✋ HOLD 3s TO STAND DOWN'}
+            {isHoldingStandDown ? 'HOLDING STAND DOWN...' : 'HOLD 3s TO STAND DOWN'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -240,7 +240,7 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
               accessibilityLabel="Confirm stand down simulated emergency"
             >
               <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 13, fontWeight: '700' }}>
-                ✓ CONFIRM STAND DOWN PREVIEW
+                CONFIRM STAND DOWN PREVIEW
               </Text>
             </TouchableOpacity>
 
@@ -252,7 +252,7 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
               accessibilityLabel="Cancel accessible stand-down"
             >
               <Text variant="mono" style={{ color: primitive.color.snow[300], fontSize: 12, fontWeight: '600' }}>
-                ✕ KEEP ACTIVE PREVIEW
+                KEEP ACTIVE PREVIEW
               </Text>
             </TouchableOpacity>
           </View>
@@ -262,7 +262,7 @@ export const SOSActiveEmergencyView: React.FC<SOSActiveEmergencyViewProps> = ({
       {/* Permanent Truth Disclosure */}
       <View style={styles.footer}>
         <Text variant="mono" style={{ color: primitive.color.graphite[300], fontSize: 10, textAlign: 'center' }}>
-          ℹ️ Stand-down preview · No cancellation packets were transmitted
+          Stand-down preview · No cancellation packets were transmitted
         </Text>
       </View>
     </ScrollView>
