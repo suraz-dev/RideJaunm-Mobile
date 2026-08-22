@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * SOS CANCEL WINDOW MODAL (R15)
+ * SOS CANCEL WINDOW MODAL (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
@@ -14,6 +14,7 @@ import React from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive, safety } from '../../design/tokens';
 
@@ -80,15 +81,21 @@ export const SOSCancelWindowModal: React.FC<SOSCancelWindowModalProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Cancel simulated SOS preview"
           >
-            <Text variant="mono" style={{ color: primitive.color.snow[0], fontSize: 14, fontWeight: '700' }}>
-              ✕ CANCEL SOS PREVIEW (रद्द गर्नुहोस्)
-            </Text>
+            <View style={styles.cancelBtnRow}>
+              <Icon name="x" size={16} color={primitive.color.snow[0]} style={{ marginRight: 6 }} strokeWidth={2.5} />
+              <Text variant="mono" style={{ color: primitive.color.snow[0], fontSize: 14, fontWeight: '700' }}>
+                CANCEL SOS PREVIEW (रद्द गर्नुहोस्)
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <View style={[styles.footer, { borderTopColor: colors.borderSubtle }]}>
-            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
-              ℹ️ Rehearsal grace window · No SMS, packet, or live call initiated
-            </Text>
+            <View style={styles.footerRow}>
+              <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
+                Rehearsal grace window · No SMS, packet, or live call initiated
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -120,9 +127,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: primitive.spacing[3],
   },
+  cancelBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   footer: {
     width: '100%',
     paddingTop: primitive.spacing[3],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
