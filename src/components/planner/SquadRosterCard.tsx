@@ -1,19 +1,11 @@
 /**
  * ============================================================================
- * SQUAD ROSTER CARD COMPONENT (R11)
+ * SQUAD ROSTER CARD COMPONENT (R16 REFINED)
  * ============================================================================
  *
- * WHY THIS EXISTS:
  * Renders individual squad member cards with local role selection (Lead,
  * Sweep, Rider) using radiogroup semantics, readiness badges, and synthetic
- * invite preview actions.
- *
- * ACCESSIBILITY & SAFETY INVARIANTS:
- * 1. Minimum touch target of 48 dp for role radio buttons and action buttons.
- * 2. Role radiogroup announces member name, role, and selection state.
- * 3. Never uses SOS Red (#FF1F3D) for warnings or member status.
- * 4. Discloses that no real invitations are sent on every card.
- * 5. Zero raw hex/RGBA; uses semantic theme tokens.
+ * invite preview actions with vector icons.
  */
 
 import React from 'react';
@@ -22,6 +14,7 @@ import { FixtureSquadMember, FixtureTripRole } from '../../domain/tripReadiness'
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -51,7 +44,7 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
         return 'volt';
       case 'attention':
       case 'blocked':
-        return 'warning'; // Non-SOS semantic treatment (SOS Red reserved strictly for emergencies)
+        return 'warning';
       case 'unknown':
       default:
         return 'neutral';
@@ -80,7 +73,7 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
             {member.displayName}
           </Text>
           {member.displayNameNepali && (
-            <Text variant="bodySmall" style={{ color: colors.textSubtle }}>
+            <Text variant="bodySmall" style={{ color: colors.textSubtle, fontFamily: 'Mukta_500Medium' }}>
               {member.displayNameNepali}
             </Text>
           )}
@@ -88,10 +81,19 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
         <Badge
           label={
             member.role === 'lead'
-              ? '👑 SQUAD LEAD'
+              ? 'SQUAD LEAD'
               : member.role === 'sweep'
-              ? '🛡️ SWEEP'
-              : '🏍️ RIDER'
+              ? 'SWEEP'
+              : 'RIDER'
+          }
+          icon={
+            member.role === 'lead' ? (
+              <Icon name="shield-check" size={11} color={primitive.color.volt[400]} />
+            ) : member.role === 'sweep' ? (
+              <Icon name="shield" size={11} color={primitive.color.route.supercurvy} />
+            ) : (
+              <Icon name="bike" size={11} color={primitive.color.cyan[400]} />
+            )
           }
           variant={member.role === 'lead' ? 'volt' : member.role === 'sweep' ? 'supercurvy' : 'cyan'}
           size="sm"
@@ -191,9 +193,12 @@ export const SquadRosterCard: React.FC<SquadRosterCardProps> = ({
           style={{ minHeight: 48, flex: 1 }}
         />
         {/* Permanent no-invitation-sent disclosure */}
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4, textAlign: 'center' }}>
-          ℹ️ No invitation was sent · Synthetic roster preview only
-        </Text>
+        <View style={styles.disclosureRow}>
+          <Icon name="info" size={11} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
+            No invitation was sent · Synthetic roster preview only
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -244,5 +249,11 @@ const styles = StyleSheet.create({
   inviteActionRow: {
     paddingTop: primitive.spacing[2],
     borderTopWidth: 1,
+  },
+  disclosureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
 });

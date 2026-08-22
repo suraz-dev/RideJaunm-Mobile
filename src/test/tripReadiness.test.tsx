@@ -102,7 +102,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
     });
 
     // Validation warning should now appear because there is no Lead
-    expect(view.getByText(/⚠️ Role Validation: No Lead designated\./)).toBeTruthy();
+    expect(view.getByText(/Role Validation: No Lead designated\./)).toBeTruthy();
   });
 
   test('triggers synthetic invite preview with truthful no-invitation-sent confirmation and permanent disclosures', async () => {
@@ -110,7 +110,7 @@ describe('RideJaunm R11 Fixture Trip Readiness & Squad Planning Handoff', () => 
 
     // Permanent disclosure present on all member cards
     expect(
-      view.getAllByText('ℹ️ No invitation was sent · Synthetic roster preview only').length
+      view.getAllByText('No invitation was sent · Synthetic roster preview only').length
     ).toBeGreaterThanOrEqual(3);
 
     // Existing ready members do NOT show "INVITE CONFIRMED"

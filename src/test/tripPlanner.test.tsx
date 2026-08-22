@@ -36,8 +36,8 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     // Provenance disclosure
     expect(view.getAllByText(/Source: NP-ROUTING-2026.08.15/).length).toBeGreaterThanOrEqual(1);
 
-    // Synthetic map preview is rendered
-    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
+    // Route trace map preview is rendered
+    expect(view.getByText('ROUTE TRACE PREVIEW')).toBeTruthy();
   });
 
   test('allows editing Origin location via local catalog search', async () => {
@@ -71,7 +71,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.press(squadTab);
     });
 
-    expect(view.getByText('TASK R11 SQUAD READINESS')).toBeTruthy();
+    expect(view.getByText('SQUAD READINESS')).toBeTruthy();
     expect(view.getByText(/Himalayan Ridge Riders Squad/)).toBeTruthy();
     expect(
       view.getByText(/Inspect squad roster, assign local planning roles, and verify multi-factor pre-ride trip readiness\./)
@@ -81,7 +81,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
     await act(async () => {
       fireEvent.press(soloTab);
     });
-    expect(view.queryByText('TASK R11 SQUAD READINESS')).toBeNull();
+    expect(view.queryByText('SQUAD READINESS')).toBeNull();
   });
 
   test('searches local Nepal places catalogue, selects Janakpur (Terai corridor), and preserves Curvy as default', async () => {
@@ -125,13 +125,13 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
 
     const searchInput = view.getByPlaceholderText(/Search Nepal destination/);
     await act(async () => {
-      fireEvent.changeText(searchInput, 'NonExistentCity123');
+      fireEvent.changeText(searchInput, 'ZzzInvalidPlace123');
     });
 
-    expect(view.getByText('No places found in Nepal fixture catalog.')).toBeTruthy();
+    expect(view.getByText('NO MATCHES')).toBeTruthy();
   });
 
-  test('renders visible offline-catalogue search state when in dead zone or offline mode', async () => {
+  test('surfaces visible offline fixture catalogue badge in offline search mode', async () => {
     const view = await render(
       <TripPlannerScreen forceOfflineSearchState={true} />,
       { wrapper: createWrapper(connectionDeadZoneSnapshot) }
@@ -173,7 +173,7 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
       fireEvent.press(mustangResult);
     });
 
-    expect(view.getByText('⚠️ PERMIT REQUIRED')).toBeTruthy();
+    expect(view.getByText('PERMIT REQUIRED')).toBeTruthy();
     expect(
       view.getByText(/ACAP & Restricted Area Permit \(RAP\) mandatory north of Kagbeni checkpoint/)
     ).toBeTruthy();
@@ -233,19 +233,19 @@ describe('RideJaunm R10 Trip Planner & Route Comparison', () => {
   test('toggles fixture map preview visibility', async () => {
     const view = await render(<TripPlannerScreen />, { wrapper: createWrapper() });
 
-    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
+    expect(view.getByText('ROUTE TRACE PREVIEW')).toBeTruthy();
 
-    const hideMapBtn = view.getByText('HIDE FIXTURE MAP (नक्सा लुकाउनुहोस्)');
+    const hideMapBtn = view.getByText('HIDE ROUTE MAP (नक्सा लुकाउनुहोस्)');
     await act(async () => {
       fireEvent.press(hideMapBtn);
     });
-    expect(view.queryByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeNull();
+    expect(view.queryByText('ROUTE TRACE PREVIEW')).toBeNull();
 
-    const previewMapBtn = view.getByText('PREVIEW FIXTURE ROUTE (पूर्वावलोकन)');
+    const previewMapBtn = view.getByText('PREVIEW ROUTE MAP (पूर्वावलोकन)');
     await act(async () => {
       fireEvent.press(previewMapBtn);
     });
-    expect(view.getByText('SYNTHETIC FIXTURE ROUTE TRACE PREVIEW')).toBeTruthy();
+    expect(view.getByText('ROUTE TRACE PREVIEW')).toBeTruthy();
   });
 
   test('renders cleanly across all 4 theme modes', async () => {

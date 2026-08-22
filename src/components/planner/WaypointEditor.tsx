@@ -1,18 +1,10 @@
 /**
  * ============================================================================
- * ACCESSIBLE WAYPOINT EDITOR COMPONENT (R10)
+ * ACCESSIBLE WAYPOINT EDITOR COMPONENT (R16 REFINED)
  * ============================================================================
  *
- * WHY THIS EXISTS:
  * Allows riders to add, remove, and reorder intermediate route stops
- * (fuel gaps, scenic viewpoints, meal hubs, and permit checkpoints)
- * with accessible touch controls and destructive action confirmation.
- *
- * ACCESSIBILITY INVARIANTS:
- * 1. Reordering controls (Move Up / Move Down) have distinct accessible labels
- *    and minimum touch targets of 48 dp.
- * 2. Destructive waypoint removal requires explicit confirmation before mutation.
- * 3. Pre-authored synthetic waypoint estimates only.
+ * with accessible touch controls, vector icons, and destructive action confirmation.
  */
 
 import React, { useState } from 'react';
@@ -21,6 +13,7 @@ import { PlannerWaypoint } from '../../domain/tripPlanner';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon, IconName } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -44,22 +37,21 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
   const { colors, mode } = useTheme();
   const isDayGlare = mode === 'dayGlare';
 
-  // [P1] Confirmation state before permanent deletion
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
 
-  const getCategoryIcon = (category: PlannerWaypoint['category']) => {
+  const getCategoryIconName = (category: PlannerWaypoint['category']): IconName => {
     switch (category) {
       case 'fuel':
-        return '⛽';
+        return 'flame';
       case 'food':
-        return '🍲';
+        return 'clock';
       case 'viewpoint':
-        return '🏔️';
+        return 'mountain';
       case 'permit':
-        return '🛂';
+        return 'shield-check';
       case 'rest':
       default:
-        return '☕';
+        return 'clock';
     }
   };
 
@@ -72,7 +64,6 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
     setPendingRemoveId(null);
   };
 
-  // Filter out suggestions that are already in the waypoints list
   const availableSuggestions = suggestedWaypoints.filter(
     (s) => !waypoints.some((w) => w.place.id === s.place.id)
   );
@@ -85,7 +76,7 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
           Route Stops & Waypoints ({waypoints.length})
         </Text>
         <Badge
-          label="SYNTHETIC FIXTURE"
+          label="PREVIEW"
           variant="neutral"
           size="sm"
         />
@@ -144,18 +135,18 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
                 <View style={styles.waypointInfo}>
                   <View style={styles.categoryBadgeRow}>
                     <Badge label={`#${index + 1}`} variant="cyan" size="sm" />
-                    <Text style={{ marginLeft: 6, fontSize: 13 }}>
-                      {getCategoryIcon(wp.category)}
-                    </Text>
-                    <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginLeft: 6, textTransform: 'uppercase' }}>
-                      {wp.category}
-                    </Text>
+                    <View style={styles.categoryIconWrap}>
+                      <Icon name={getCategoryIconName(wp.category)} size={13} color={colors.textSubtle} />
+                      <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginLeft: 4, textTransform: 'uppercase' }}>
+                        {wp.category}
+                      </Text>
+                    </View>
                   </View>
                   <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '700', marginTop: 2 }}>
                     {wp.place.name}
                   </Text>
                   {wp.place.nameNepali && (
-                    <Text variant="bodySmall" style={{ color: colors.textSubtle }}>
+                    <Text variant="bodySmall" style={{ color: colors.textSubtle, fontFamily: 'Mukta_500Medium' }}>
                       {wp.place.nameNepali}
                     </Text>
                   )}
@@ -178,16 +169,12 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Move stop ${wp.place.name} earlier in route order`}
                   >
-                    <Text
-                      variant="mono"
-                      style={{
-                        color: isFirst ? colors.textSubtle : colors.text,
-                        fontSize: 12,
-                        fontWeight: '700',
-                      }}
-                    >
-                      ▲
-                    </Text>
+                    <Icon
+                      name="chevron-up"
+                      size={16}
+                      color={isFirst ? colors.textSubtle : colors.text}
+                      strokeWidth={2.5}
+                    />
                   </TouchableOpacity>
 
                   {/* Move Down */}
@@ -205,16 +192,12 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Move stop ${wp.place.name} later in route order`}
                   >
-                    <Text
-                      variant="mono"
-                      style={{
-                        color: isLast ? colors.textSubtle : colors.text,
-                        fontSize: 12,
-                        fontWeight: '700',
-                      }}
-                    >
-                      ▼
-                    </Text>
+                    <Icon
+                      name="chevron-down"
+                      size={16}
+                      color={isLast ? colors.textSubtle : colors.text}
+                      strokeWidth={2.5}
+                    />
                   </TouchableOpacity>
 
                   {/* Remove - Triggers confirmation */}
@@ -231,16 +214,12 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Remove stop ${wp.place.name} from route`}
                   >
-                    <Text
-                      variant="mono"
-                      style={{
-                        color: primitive.color.semantic.danger,
-                        fontSize: 13,
-                        fontWeight: '900',
-                      }}
-                    >
-                      ✕
-                    </Text>
+                    <Icon
+                      name="x"
+                      size={16}
+                      color={primitive.color.semantic.danger}
+                      strokeWidth={2.5}
+                    />
                   </TouchableOpacity>
                 </View>
               </>
@@ -253,7 +232,7 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
       {availableSuggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
           <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5, marginBottom: primitive.spacing[2] }}>
-            SUGGESTED NEPAL STOPS (+ ADD)
+            SUGGESTED STOPS (+ ADD)
           </Text>
           <View style={styles.chipsWrap}>
             {availableSuggestions.map((suggestion) => (
@@ -271,9 +250,7 @@ export const WaypointEditor: React.FC<WaypointEditorProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={`Add suggested stop: ${suggestion.place.name}`}
               >
-                <Text style={{ fontSize: 12, marginRight: 4 }}>
-                  {getCategoryIcon(suggestion.category)}
-                </Text>
+                <Icon name={getCategoryIconName(suggestion.category)} size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
                 <Text variant="bodySmall" style={{ color: colors.text, fontWeight: '600', fontSize: 12 }}>
                   + {suggestion.place.name}
                 </Text>
@@ -326,6 +303,11 @@ const styles = StyleSheet.create({
   categoryBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  categoryIconWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 6,
   },
   actionControls: {
     flexDirection: 'row',

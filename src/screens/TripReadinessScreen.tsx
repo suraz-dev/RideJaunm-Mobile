@@ -1,15 +1,14 @@
 /**
  * ============================================================================
- * FIXTURE TRIP READINESS & SQUAD HANDOFF SCREEN (R11)
+ * FIXTURE TRIP READINESS & SQUAD HANDOFF SCREEN (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
  * 1. Squad roster inspection and local role reassignment (Lead, Sweep, Rider).
  * 2. Local validation states for lead/sweep assignment.
- * 3. 6-Category pre-ride readiness facts (route, offline maps, permits, fuel, weather, safety).
+ * 3. 6-Category pre-ride readiness facts with vector icons.
  * 4. Synthetic invite and save actions with explicit no-send/no-save confirmations.
  * 5. Offline/mesh banner handling in dead-zone and meshOnly states.
- * 6. Full theme compliance across Night, Day Glare, Dusk, and Blackout.
  */
 
 import React, { useState } from 'react';
@@ -22,6 +21,7 @@ import {
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
+import { Icon, IconName } from '../components/primitives/Icon';
 import { SquadRosterCard } from '../components/planner/SquadRosterCard';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
@@ -84,21 +84,21 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
   const hasLead = members.some((m) => m.role === 'lead');
   const hasSweep = members.some((m) => m.role === 'sweep');
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIconName = (category: string): IconName => {
     switch (category) {
       case 'route':
-        return '🛣️';
+        return 'route';
       case 'offline_map':
-        return '🗺️';
+        return 'download';
       case 'permit':
-        return '🛂';
+        return 'shield-check';
       case 'fuel':
-        return '⛽';
+        return 'flame';
       case 'weather':
-        return '⛅';
+        return 'mountain';
       case 'safety':
       default:
-        return '🛡️';
+        return 'shield';
     }
   };
 
@@ -108,7 +108,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
         return 'volt';
       case 'attention':
       case 'blocked':
-        return 'warning'; // Non-SOS semantic treatment (SOS Red reserved strictly for emergencies)
+        return 'warning';
       case 'unknown':
       default:
         return 'neutral';
@@ -129,9 +129,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Back to Trip Planner screen"
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 13, fontWeight: '600' }}>
-            ← Back to Trip Planner (यात्रा योजना)
-          </Text>
+          <View style={styles.backRow}>
+            <Icon name="chevron-left" size={16} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 13, fontWeight: '600' }}>
+              Back to Trip Planner (यात्रा योजना)
+            </Text>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -154,7 +157,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
             },
           ]}
         >
-          <Badge label="OFFLINE MESH MODE" variant="warning" size="sm" />
+          <Badge
+            label="OFFLINE MESH MODE"
+            variant="warning"
+            size="sm"
+            icon={<Icon name="wifi-off" size={11} color={primitive.color.semantic.warning} />}
+          />
           <Text variant="bodySmall" style={{ color: colors.text, marginTop: 4, fontWeight: '600' }}>
             Operating in offline dead-zone / mesh mode.
           </Text>
@@ -167,9 +175,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
       {/* 1. Squad Roster Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
-          <Text variant="h2" style={{ color: colors.text }}>
-            Squad Roster & Roles (टोली रोस्टर)
-          </Text>
+          <View style={styles.headerTitleRow}>
+            <Icon name="users" size={18} color={primitive.color.volt[400]} style={{ marginRight: 6 }} />
+            <Text variant="h2" style={{ color: colors.text }}>
+              Squad Roster & Roles (टोली रोस्टर)
+            </Text>
+          </View>
           <Badge label={`${members.length} MEMBERS`} variant="supercurvy" size="sm" />
         </View>
 
@@ -184,9 +195,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
               },
             ]}
           >
-            <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-              ⚠️ Role Validation: {!hasLead ? 'No Lead designated. ' : ''}{!hasSweep ? 'No Sweep designated. ' : ''}
-            </Text>
+            <View style={styles.validationRow}>
+              <Icon name="alert-triangle" size={14} color={primitive.color.semantic.warning} style={{ marginRight: 6 }} />
+              <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700', flex: 1 }}>
+                Role Validation: {!hasLead ? 'No Lead designated. ' : ''}{!hasSweep ? 'No Sweep designated. ' : ''}
+              </Text>
+            </View>
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
               Local role assignment is for pre-ride planning only (no remote dispatch).
             </Text>
@@ -204,9 +218,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
               },
             ]}
           >
-            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-              ℹ️ {inviteNotice}
-            </Text>
+            <View style={styles.noticeRow}>
+              <Icon name="info" size={13} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+                {inviteNotice}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -224,9 +241,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
       {/* 2. Pre-Ride Readiness Checklist */}
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
-          <Text variant="h2" style={{ color: colors.text }}>
-            Pre-Ride Readiness (तयारी विवरण)
-          </Text>
+          <View style={styles.headerTitleRow}>
+            <Icon name="shield-check" size={18} color={primitive.color.volt[400]} style={{ marginRight: 6 }} />
+            <Text variant="h2" style={{ color: colors.text }}>
+              Pre-Ride Readiness (तयारी विवरण)
+            </Text>
+          </View>
           <Badge label="6 FACTORS" variant="volt" size="sm" />
         </View>
 
@@ -245,7 +265,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
           >
             <View style={styles.checklistHeader}>
               <View style={styles.categoryBadgeCluster}>
-                <Text style={{ fontSize: 14, marginRight: 6 }}>{getCategoryIcon(item.category)}</Text>
+                <Icon name={getCategoryIconName(item.category)} size={14} color={colors.textSubtle} style={{ marginRight: 6 }} />
                 <Badge
                   label={item.category.toUpperCase()}
                   variant="neutral"
@@ -263,7 +283,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
               {item.title}
             </Text>
             {item.titleNepali && (
-              <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 1 }}>
+              <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 1, fontFamily: 'Mukta_500Medium' }}>
                 {item.titleNepali}
               </Text>
             )}
@@ -287,7 +307,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
           Trip Plan & Squad Readiness
         </Text>
         <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-          Synthetic squad preview · No saved trips or server invitations generated.
+          Squad preview · No saved trips or server invitations generated.
         </Text>
 
         {saveNotice && (
@@ -301,9 +321,12 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
               },
             ]}
           >
-            <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 12, fontWeight: '700' }}>
-              ✓ {saveNotice}
-            </Text>
+            <View style={styles.noticeRow}>
+              <Icon name="check" size={13} color={primitive.color.volt[400]} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 12, fontWeight: '700' }}>
+                {saveNotice}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -311,6 +334,7 @@ export const TripReadinessScreen: React.FC<TripReadinessScreenProps> = ({
           label="SAVE TRIP PREVIEW (पूर्वावलोकन सुरक्षित)"
           onPress={handleSavePreview}
           variant="primary"
+          icon={<Icon name="check" size={16} color={primitive.color.graphite[950]} strokeWidth={2.5} />}
           style={{ marginTop: primitive.spacing[3], minHeight: 48 }}
         />
       </View>
@@ -332,6 +356,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: primitive.spacing[3],
   },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   subtitle: {
     marginTop: primitive.spacing[1],
     marginBottom: primitive.spacing[4],
@@ -351,17 +379,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: primitive.spacing[3],
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   validationNotice: {
     padding: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     marginBottom: primitive.spacing[3],
   },
+  validationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   noticeBox: {
     padding: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     marginBottom: primitive.spacing[3],
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   readinessCard: {
     borderRadius: primitive.radius.lg,
