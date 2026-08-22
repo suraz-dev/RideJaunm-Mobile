@@ -1,13 +1,12 @@
 /**
  * ============================================================================
- * SAFETY CAPABILITY MATRIX (R15)
+ * SAFETY CAPABILITY MATRIX (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Plain-language channel capability breakdown (GPS, BLE Mesh, Cellular, Satellite, Delivery Proof).
- * 2. Pre-authored synthetic location label and battery indicator.
+ * 1. Plain-language channel capability breakdown (GPS, BLE Mesh, Cellular, Satellite, Delivery Proof) with vector icons.
+ * 2. Synthetic location label and battery indicator.
  * 3. Strict safety invariant: Uses warning/neutral/volt/cyan tokens (never SOS Red).
- * 4. Full theme compliance across Night, Day Glare, Dusk, Blackout.
  */
 
 import React from 'react';
@@ -15,6 +14,7 @@ import { View, StyleSheet } from 'react-native';
 import { FixtureSafetyCapabilitySnapshot } from '../../domain/sosConsole';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -31,12 +31,33 @@ export const SafetyCapabilityMatrix: React.FC<SafetyCapabilityMatrixProps> = ({
   const getEvidenceBadge = (state: string, label: string) => {
     switch (state) {
       case 'local_observation':
-        return <Badge label={label} variant="volt" size="sm" />;
+        return (
+          <Badge
+            label={label}
+            variant="volt"
+            size="sm"
+            icon={<Icon name="check" size={10} color={primitive.color.volt[400]} />}
+          />
+        );
       case 'device_reported':
-        return <Badge label={label} variant="cyan" size="sm" />;
+        return (
+          <Badge
+            label={label}
+            variant="cyan"
+            size="sm"
+            icon={<Icon name="radio" size={10} color={primitive.color.cyan[400]} />}
+          />
+        );
       case 'unavailable':
       default:
-        return <Badge label={label} variant="warning" size="sm" />;
+        return (
+          <Badge
+            label={label}
+            variant="warning"
+            size="sm"
+            icon={<Icon name="alert-triangle" size={10} color={primitive.color.semantic.warning} />}
+          />
+        );
     }
   };
 
@@ -57,7 +78,7 @@ export const SafetyCapabilityMatrix: React.FC<SafetyCapabilityMatrixProps> = ({
         ]}
       >
         <View style={styles.overviewRow}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             SYNTHETIC LAST-KNOWN LOCATION
           </Text>
           <Badge
@@ -66,19 +87,37 @@ export const SafetyCapabilityMatrix: React.FC<SafetyCapabilityMatrixProps> = ({
             size="sm"
           />
         </View>
-        <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, marginTop: 4 }}>
-          📍 {snapshot.lastKnownLocationSynthetic}
-        </Text>
+        <View style={styles.locationRow}>
+          <Icon name="map-pin" size={13} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12 }}>
+            {snapshot.lastKnownLocationSynthetic}
+          </Text>
+        </View>
 
         <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
 
         <View style={styles.overviewRow}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             DEVICE BATTERY OBSERVATION
           </Text>
-          <Text variant="mono" style={{ color: snapshot.batteryHealth === 'low' ? primitive.color.semantic.warning : colors.text, fontSize: 12, fontWeight: '700' }}>
-            🔋 {snapshot.batteryPercent}% ({snapshot.batteryHealth.toUpperCase()})
-          </Text>
+          <View style={styles.batteryRow}>
+            <Icon
+              name="battery"
+              size={13}
+              color={snapshot.batteryHealth === 'low' ? primitive.color.semantic.warning : colors.text}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              variant="mono"
+              style={{
+                color: snapshot.batteryHealth === 'low' ? primitive.color.semantic.warning : colors.text,
+                fontSize: 12,
+                fontWeight: '700',
+              }}
+            >
+              {snapshot.batteryPercent}% ({snapshot.batteryHealth.toUpperCase()})
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -115,9 +154,12 @@ export const SafetyCapabilityMatrix: React.FC<SafetyCapabilityMatrixProps> = ({
         ))}
 
         <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-            ℹ️ {snapshot.syntheticDisclosure}
-          </Text>
+          <View style={styles.footerRow}>
+            <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+              {snapshot.syntheticDisclosure}
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -142,6 +184,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  batteryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  divider: {
+    height: 1,
+    marginVertical: primitive.spacing[3],
+  },
   matrixCard: {
     borderRadius: primitive.radius.lg,
     padding: primitive.spacing[4],
@@ -150,20 +205,20 @@ const styles = StyleSheet.create({
   channelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: primitive.spacing[2],
   },
   channelInfoCol: {
     flex: 1,
-    marginRight: primitive.spacing[3],
-  },
-  divider: {
-    height: 1,
-    marginVertical: primitive.spacing[3],
+    marginRight: primitive.spacing[2],
   },
   cardFooter: {
-    marginTop: primitive.spacing[2],
+    marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

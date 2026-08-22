@@ -76,10 +76,10 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     const view = await render(<SquadFeedScreen />, { wrapper: createWrapper() });
 
     expect(view.getByText('Himalayan Squad & Community')).toBeTruthy();
-    expect(view.getByText('SYNTHETIC PREVIEW')).toBeTruthy();
+    expect(view.getByText('LOCAL PREVIEW')).toBeTruthy();
     expect(
       view.getByText(
-        /Deterministic local fixtures · No live location, chat delivery, media uploads, or remote tracking\./
+        /Local preview · No live location, chat delivery, media uploads, or remote tracking\./
       )
     ).toBeTruthy();
 
@@ -111,7 +111,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       fireEvent.press(routesFilter);
     });
     expect(view.getByText('Prashant Lama')).toBeTruthy();
-    expect(view.getByText(/🗺️ Kulekhani – Sisneri – Hetauda/)).toBeTruthy();
+    expect(view.getByText(/Kulekhani – Sisneri – Hetauda/)).toBeTruthy();
   });
 
   test('toggles low-data mode and suppresses media placeholders with truth copy', async () => {
@@ -123,7 +123,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       fireEvent.press(routesFilter);
     });
 
-    expect(view.getByText(/📷 Kulekhani Reservoir Ridge/)).toBeTruthy();
+    expect(view.getByText(/Kulekhani Reservoir Ridge/)).toBeTruthy();
 
     // Toggle Low Data Mode ON
     const lowDataBtn = view.getByLabelText('Enable low-data mode preview');
@@ -132,9 +132,9 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     });
 
     expect(
-      view.getByText(/📡 Low-data fixture preview — no media loaded\./)
+      view.getByText(/Low-data mode — media omitted/)
     ).toBeTruthy();
-    expect(view.queryByText(/📷 Kulekhani Reservoir Ridge/)).toBeNull();
+    expect(view.queryByText(/Kulekhani Reservoir Ridge/)).toBeNull();
   });
 
   test('handles feed composer with permanent no-publish/no-queue truth copy', async () => {
@@ -157,7 +157,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     });
 
     expect(
-      view.getByText(/Like preview only · No outbox write or network sync/)
+      view.getByText(/Like preview only · No network sync/)
     ).toBeTruthy();
   });
 
@@ -172,21 +172,21 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
 
     // Verify group info
     expect(view.getByText('Himalayan Riders KT-04')).toBeTruthy();
-    expect(view.getByText('FIXTURE ROSTER')).toBeTruthy();
+    expect(view.getByText('CACHED ROSTER')).toBeTruthy();
 
     // Verify qualified presence badges (zero 'Live' claims)
-    expect(view.getAllByText('CACHED FIXTURE').length).toBeGreaterThan(0);
-    expect(view.getByText('LAST-KNOWN FIXTURE')).toBeTruthy();
-    expect(view.getByText('MESH PREVIEW')).toBeTruthy();
-    expect(view.getByText('UNAVAILABLE')).toBeTruthy();
+    expect(view.getAllByText('CACHED LOCATION').length).toBeGreaterThan(0);
+    expect(view.getByText('LAST-KNOWN LOCATION')).toBeTruthy();
+    expect(view.getByText('MESH RADAR')).toBeTruthy();
+    expect(view.getByText('OFFLINE')).toBeTruthy();
     expect(view.queryByText('Live')).toBeNull();
     expect(view.queryByText('online now')).toBeNull();
 
     // Verify Map Bounds preview
-    expect(view.getByText('SQUAD MAP BOUNDS PREVIEW')).toBeTruthy();
+    expect(view.getByText('SQUAD MAP PREVIEW')).toBeTruthy();
     expect(
       view.getByText(
-        /Fixture presence preview — not live rider tracking · © OpenStreetMap contributors/
+        /Local presence preview — not live rider tracking · © OpenStreetMap contributors/
       )
     ).toBeTruthy();
 
@@ -196,7 +196,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
       fireEvent.press(callBtn);
     });
     expect(
-      view.getByText(/Radio \/ Call for Bikash Shrestha is unavailable in fixture preview/)
+      view.getByText(/Call for Bikash Shrestha is unavailable in local preview/)
     ).toBeTruthy();
   });
 
@@ -219,7 +219,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     expect(view.getByText('Copy that lead. Passing through Dharke now.')).toBeTruthy();
     expect(
       view.getByText(
-        'Traffic slow near Malekhu. Mesh capability is unverified in this fixture preview.'
+        'Traffic slow near Malekhu. Mesh capability is in preview mode.'
       )
     ).toBeTruthy();
 
@@ -257,7 +257,7 @@ describe('RideJaunm R13 Fixture Squad, Community Feed & Chat', () => {
     expect(view.getByText('OFFLINE MESH MODE')).toBeTruthy();
     expect(
       view.getByText(
-        /Feed, squad, and chat are rendered from cached local fixtures\./
+        /Feed, squad, and chat are rendered from local cache\./
       )
     ).toBeTruthy();
   });

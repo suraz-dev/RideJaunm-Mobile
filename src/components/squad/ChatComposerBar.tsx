@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * CHAT COMPOSER BAR (R13)
+ * CHAT COMPOSER BAR (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Component-local draft message editing.
+ * 1. Draft message editing.
  * 2. "Send Preview" button with permanent truth disclosure:
  *    "No message was sent, queued, or delivered."
  * 3. 48dp minimum touch target.
@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Text } from '../primitives/Text';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -51,9 +52,12 @@ export const ChatComposerBar: React.FC = () => {
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {sendNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.semantic.warning} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
+              {sendNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -88,16 +92,22 @@ export const ChatComposerBar: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel="Send chat message preview"
         >
-          <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 11, fontWeight: '700' }}>
-            SEND PREVIEW
-          </Text>
+          <View style={styles.sendBtnRow}>
+            <Icon name="send" size={13} color={primitive.color.graphite[950]} style={{ marginRight: 4 }} strokeWidth={2.5} />
+            <Text variant="mono" style={{ color: primitive.color.graphite[950], fontSize: 11, fontWeight: '700' }}>
+              SEND
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       <View style={[styles.barFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
-          ℹ️ Local message composer · No message was sent, queued, or delivered
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
+            Local message composer · No message was sent, queued, or delivered
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -117,6 +127,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: primitive.spacing[2],
   },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -132,16 +146,24 @@ const styles = StyleSheet.create({
   },
   sendBtn: {
     minHeight: 48,
-    minWidth: 110,
+    minWidth: 88,
     paddingHorizontal: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  sendBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   barFooter: {
     marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[1],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

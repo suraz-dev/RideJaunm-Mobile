@@ -30,7 +30,7 @@ export const allFixtureSquadPresences: FixtureSquadPresence[] = [
     observedAt: '2026-08-15T08:30:00Z',
     relativePosition: 'ahead',
     sourceVersion: 'NP-SQUAD-2026.08.15',
-    syntheticDisclosure: 'Synthetic roster item · No live tracking active',
+    syntheticDisclosure: 'Local roster item · No live tracking active',
   },
   {
     memberId: 'rider-02',
@@ -41,7 +41,7 @@ export const allFixtureSquadPresences: FixtureSquadPresence[] = [
     observedAt: '2026-08-15T08:32:00Z',
     relativePosition: 'nearby',
     sourceVersion: 'NP-SQUAD-2026.08.15',
-    syntheticDisclosure: 'Synthetic roster item · No live tracking active',
+    syntheticDisclosure: 'Local roster item · No live tracking active',
   },
   {
     memberId: 'rider-03',
@@ -52,7 +52,7 @@ export const allFixtureSquadPresences: FixtureSquadPresence[] = [
     observedAt: '2026-08-15T08:29:00Z',
     relativePosition: 'behind',
     sourceVersion: 'NP-SQUAD-2026.08.15',
-    syntheticDisclosure: 'Synthetic roster item · Simulated mesh preview only',
+    syntheticDisclosure: 'Local roster item · Mesh radar preview',
   },
   {
     memberId: 'rider-04',
@@ -62,7 +62,7 @@ export const allFixtureSquadPresences: FixtureSquadPresence[] = [
     presence: 'unavailable',
     observedAt: '2026-08-15T07:15:00Z',
     sourceVersion: 'NP-SQUAD-2026.08.15',
-    syntheticDisclosure: 'Synthetic roster item · Offline/unavailable fixture',
+    syntheticDisclosure: 'Local roster item · Offline status',
   },
   {
     memberId: 'rider-05',
@@ -73,7 +73,7 @@ export const allFixtureSquadPresences: FixtureSquadPresence[] = [
     observedAt: '2026-08-15T08:25:00Z',
     relativePosition: 'nearby',
     sourceVersion: 'NP-SQUAD-2026.08.15',
-    syntheticDisclosure: 'Synthetic roster item · No live tracking active',
+    syntheticDisclosure: 'Local roster item · No live tracking active',
   },
 ];
 
@@ -85,7 +85,7 @@ export const primarySquadGroupFixture: FixtureSquadGroup = {
   corridor: 'Prithvi Highway & Kali Gandaki Corridor',
   members: allFixtureSquadPresences,
   sourceVersion: 'NP-SQUAD-2026.08.15',
-  syntheticDisclosure: 'Pre-authored squad group · No live group session active',
+  syntheticDisclosure: 'Squad roster · No active group session',
 };
 
 export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
@@ -100,12 +100,12 @@ export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
     routeSummary: 'Kulekhani – Sisneri – Hetauda (48 km · Curvy)',
     filterCategory: 'routes',
     mediaKind: 'image_placeholder',
-    mediaCaption: 'Kulekhani Reservoir Ridge (Simulated Placeholder)',
+    mediaCaption: 'Kulekhani Reservoir Ridge (Cached Photo)',
     postedAt: '2026-08-15T07:45:00Z',
     likesCount: 18,
     commentsCount: 4,
     sourceVersion: 'NP-FEED-2026.08.15',
-    syntheticDisclosure: 'Pre-authored community post · No remote media loaded',
+    syntheticDisclosure: 'Community report · Offline cache',
   },
   {
     id: 'post-mustang-02',
@@ -118,12 +118,12 @@ export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
     routeSummary: 'Kagbeni – Lo Manthang (62 km · Supercurvy)',
     filterCategory: 'following',
     mediaKind: 'image_placeholder',
-    mediaCaption: 'Upper Mustang Canyon Track (Simulated Placeholder)',
+    mediaCaption: 'Upper Mustang Canyon Track (Cached Photo)',
     postedAt: '2026-08-15T06:30:00Z',
     likesCount: 32,
     commentsCount: 9,
     sourceVersion: 'NP-FEED-2026.08.15',
-    syntheticDisclosure: 'Pre-authored community post · No remote media loaded',
+    syntheticDisclosure: 'Community report · Offline cache',
   },
   {
     id: 'post-pokhara-03',
@@ -139,7 +139,7 @@ export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
     likesCount: 12,
     commentsCount: 2,
     sourceVersion: 'NP-FEED-2026.08.15',
-    syntheticDisclosure: 'Pre-authored community post · Media unavailable in offline mode',
+    syntheticDisclosure: 'Community report · Media offline',
   },
   {
     id: 'post-draft-04',
@@ -154,7 +154,7 @@ export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
     likesCount: 0,
     commentsCount: 0,
     sourceVersion: 'NP-FEED-2026.08.15',
-    syntheticDisclosure: 'Component-local draft · Not published to network',
+    syntheticDisclosure: 'Local draft · Not published',
   },
   {
     id: 'post-hidden-05',
@@ -162,13 +162,13 @@ export const allFixtureCommunityPosts: FixtureCommunityPost[] = [
     authorNepali: 'मार्ग पर्यवेक्षक',
     avatarFallback: 'TO',
     state: 'hidden_preview',
-    body: 'Flagged road condition note — hidden in fixture preview filter.',
+    body: 'Flagged road condition note — hidden in preview moderation.',
     filterCategory: 'routes',
     postedAt: '2026-08-15T05:00:00Z',
     likesCount: 0,
     commentsCount: 0,
     sourceVersion: 'NP-FEED-2026.08.15',
-    syntheticDisclosure: 'Hidden fixture item · Preview moderation filter',
+    syntheticDisclosure: 'Moderated report · Hidden in preview',
   },
 ];
 
@@ -181,7 +181,7 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     state: 'cached',
     createdAt: '2026-08-15T08:20:00Z',
     isCurrentUser: false,
-    syntheticDisclosure: 'Pre-authored chat message · No live messaging active',
+    syntheticDisclosure: 'Cached message · No live radio active',
   },
   {
     id: 'msg-02',
@@ -191,17 +191,17 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     state: 'cached',
     createdAt: '2026-08-15T08:22:00Z',
     isCurrentUser: true,
-    syntheticDisclosure: 'Pre-authored chat message · No live messaging active',
+    syntheticDisclosure: 'Cached message · No live radio active',
   },
   {
     id: 'msg-03',
     author: 'Rabin Thapa',
     authorNepali: 'रबिन थापा',
-    body: 'Traffic slow near Malekhu. Mesh capability is unverified in this fixture preview.',
+    body: 'Traffic slow near Malekhu. Mesh capability is in preview mode.',
     state: 'cached',
     createdAt: '2026-08-15T08:24:00Z',
     isCurrentUser: false,
-    syntheticDisclosure: 'Pre-authored chat message · Mesh capability unverified in fixture preview',
+    syntheticDisclosure: 'Cached message · Mesh capability in preview mode',
   },
   {
     id: 'msg-04',
@@ -211,7 +211,7 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     state: 'local_draft',
     createdAt: '2026-08-15T08:26:00Z',
     isCurrentUser: true,
-    syntheticDisclosure: 'Local component draft · Not sent or delivered',
+    syntheticDisclosure: 'Local draft · Not sent or delivered',
   },
   {
     id: 'msg-05',
@@ -221,7 +221,7 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     state: 'preview_queued',
     createdAt: '2026-08-15T08:28:00Z',
     isCurrentUser: true,
-    syntheticDisclosure: 'Simulated queue preview · No outbox write performed',
+    syntheticDisclosure: 'Queued draft · No outbox write performed',
   },
   {
     id: 'msg-06',
@@ -231,6 +231,6 @@ export const allFixtureChatMessages: FixtureChatMessage[] = [
     state: 'failed_preview',
     createdAt: '2026-08-15T08:30:00Z',
     isCurrentUser: false,
-    syntheticDisclosure: 'Simulated transfer fault · No retry initiated',
+    syntheticDisclosure: 'Transfer offline · No retry initiated',
   },
 ];

@@ -1,6 +1,18 @@
+/**
+ * ============================================================================
+ * ROUTE MODE SELECTOR (R16 REFINED)
+ * ============================================================================
+ *
+ * 3-way route personality selector:
+ * 1. Straight (Cyan #22C9EE)
+ * 2. Curvy (Volt #B4FF39)
+ * 3. Supercurvy (Magenta #C25CFF)
+ */
+
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Text } from '../primitives/Text';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive, routePresentation } from '../../design/tokens';
 import * as Haptics from 'expo-haptics';
@@ -22,7 +34,8 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
   disabledReason,
   style,
 }) => {
-  const { colors } = useTheme();
+  const { colors, mode: themeMode } = useTheme();
+  const isDayGlare = themeMode === 'dayGlare';
 
   const modes: RouteMode[] = ['straight', 'curvy', 'supercurvy'];
 
@@ -43,7 +56,7 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
         style={[
           styles.container,
           {
-            backgroundColor: colors.surface,
+            backgroundColor: isDayGlare ? colors.surfaceElevated : colors.surface,
             borderColor: colors.border,
           },
         ]}
@@ -99,7 +112,7 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
                       ? colors.text
                       : colors.textMuted,
                     fontWeight: isSelected ? '700' : '500',
-                    fontSize: 13,
+                    fontSize: 12,
                   }}
                 >
                   {config.label}
@@ -114,7 +127,8 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
                     ? config.color
                     : colors.textSubtle,
                   fontSize: 10,
-                  marginTop: 2,
+                  marginTop: 1,
+                  fontFamily: 'Mukta_500Medium',
                 }}
               >
                 {isDisabled ? 'अनुपलब्ध' : config.labelNepali}
@@ -127,8 +141,9 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
       {/* Explicit Terai / Route Restriction Warning */}
       {disabledModes.length > 0 && disabledReason && (
         <View style={styles.restrictionNotice}>
-          <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 10, textAlign: 'center' }}>
-            ⚠️ {disabledReason}
+          <Icon name="alert-triangle" size={12} color={primitive.color.semantic.warning} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 10 }}>
+            {disabledReason}
           </Text>
         </View>
       )}
@@ -139,17 +154,17 @@ export const RouteModeSelector: React.FC<RouteModeSelectorProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderRadius: primitive.radius.lg,
-    padding: primitive.spacing[1],
+    borderRadius: primitive.radius.md,
+    padding: 3,
     borderWidth: 1,
   },
   option: {
     flex: 1,
-    paddingVertical: primitive.spacing[3],
+    paddingVertical: primitive.spacing[2],
     paddingHorizontal: primitive.spacing[2],
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: primitive.radius.md,
+    borderRadius: primitive.radius.sm,
     borderWidth: 1.5,
     minHeight: primitive.size.targetMin,
   },
@@ -161,10 +176,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 6,
+    marginRight: 5,
   },
   restrictionNotice: {
-    marginTop: primitive.spacing[1],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: primitive.spacing[2],
     paddingHorizontal: primitive.spacing[2],
   },
 });

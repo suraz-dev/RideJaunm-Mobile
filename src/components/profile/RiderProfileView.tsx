@@ -1,14 +1,13 @@
 /**
  * ============================================================================
- * RIDER PROFILE VIEW (R14)
+ * RIDER PROFILE VIEW (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Synthetic rider identity, callsign, blood group, and synthetic emergency contact.
- * 2. Non-live statistics grid (Total Rides, Distance, Elevation, High Passes).
+ * 1. Rider identity, callsign, blood group, and synthetic emergency contact.
+ * 2. Statistics grid (Total Rides, Distance, Elevation, High Passes) with tactical instrument styling.
  * 3. Achievement badges with pre-authored AD/BS unlock dates.
  * 4. Permanent truth disclosure: "Synthetic profile preview — not an account".
- * 5. Full theme compliance across Night, Day Glare, Dusk, Blackout.
  */
 
 import React from 'react';
@@ -16,6 +15,7 @@ import { View, StyleSheet } from 'react-native';
 import { FixtureRiderProfile, AppPreviewLanguage, CalendarSystemPreview } from '../../domain/profileSettings';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -68,9 +68,7 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
       >
         <View style={styles.headerRow}>
           <View style={styles.avatarCircle}>
-            <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 18, fontWeight: '700' }}>
-              🏍️
-            </Text>
+            <Icon name="bike" size={22} color={primitive.color.volt[400]} />
           </View>
           <View style={styles.nameCol}>
             <Text variant="h2" style={{ color: colors.text }}>
@@ -88,15 +86,18 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
         </Text>
 
         <View style={[styles.contactRow, { borderTopColor: colors.borderSubtle }]}>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-            🚨 Emergency Contact (Synthetic): {profile.emergencyContactSynthetic}
-          </Text>
+          <View style={styles.contactRowContent}>
+            <Icon name="phone" size={13} color={colors.textSubtle} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+              Emergency Contact: {profile.emergencyContactSynthetic}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Non-Live Stats Grid */}
+      {/* Stats Grid */}
       <Text variant="h3" style={[styles.sectionTitle, { color: colors.text }]}>
-        {language === 'ne' ? 'सवारी तथ्याङ्क (प्रिभ्यु)' : language === 'hi' ? 'राइड सांख्यिकी (पूर्वावलोकन)' : 'Ride Statistics (Preview)'}
+        {language === 'ne' ? 'सवारी तथ्याङ्क (पूर्वावलोकन)' : language === 'hi' ? 'राइड सांख्यिकी (पूर्वावलोकन)' : 'Ride Statistics (Preview)'}
       </Text>
 
       <View
@@ -109,22 +110,22 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
         ]}
       >
         <View style={[styles.statBox, { borderRightColor: colors.borderSubtle, borderBottomColor: colors.borderSubtle }]}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             {language === 'ne' ? 'कुल यात्राहरू' : language === 'hi' ? 'कुल राइड्स' : 'TOTAL RIDES'}
           </Text>
-          <Text variant="h2" style={{ color: colors.text }}>
+          <Text variant="h2" style={{ color: colors.text, marginTop: 4 }}>
             {profile.totalRidesCount}
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9, marginTop: 2 }}>
-            Pre-authored count
+            Recorded count
           </Text>
         </View>
 
         <View style={[styles.statBox, { borderBottomColor: colors.borderSubtle }]}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             {language === 'ne' ? 'कुल दूरी' : language === 'hi' ? 'कुल दूरी' : 'TOTAL DISTANCE'}
           </Text>
-          <Text variant="h2" style={{ color: primitive.color.cyan[400] }}>
+          <Text variant="h2" style={{ color: primitive.color.cyan[400], marginTop: 4 }}>
             {profile.totalDistanceKm.toLocaleString()} km
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9, marginTop: 2 }}>
@@ -133,10 +134,10 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
         </View>
 
         <View style={[styles.statBox, { borderRightColor: colors.borderSubtle }]}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             {language === 'ne' ? 'उचाइ वृद्धि' : language === 'hi' ? 'ऊंचाई लाभ' : 'ELEVATION GAIN'}
           </Text>
-          <Text variant="h2" style={{ color: primitive.color.volt[400] }}>
+          <Text variant="h2" style={{ color: primitive.color.volt[400], marginTop: 4 }}>
             {profile.elevationGainMeters.toLocaleString()} m
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9, marginTop: 2 }}>
@@ -145,10 +146,10 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
         </View>
 
         <View style={styles.statBox}>
-          <Text variant="bodySmall" muted>
+          <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
             {language === 'ne' ? 'उच्च भञ्ज्याङहरू' : language === 'hi' ? 'ऊंचे दर्रे' : 'HIGH PASSES'}
           </Text>
-          <Text variant="h2" style={{ color: primitive.color.route.supercurvy }}>
+          <Text variant="h2" style={{ color: primitive.color.route.supercurvy, marginTop: 4 }}>
             {profile.highPassesCrossedCount}
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9, marginTop: 2 }}>
@@ -176,8 +177,13 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
           >
             <View style={styles.badgeHeader}>
               <View style={styles.badgeTitleRow}>
-                <Text style={styles.badgeIcon}>{b.icon}</Text>
-                <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text, marginLeft: 8 }}>
+                <Icon
+                  name={b.id.includes('pass') || b.id.includes('himalayan') ? 'mountain' : 'bike'}
+                  size={15}
+                  color={primitive.color.volt[400]}
+                  style={{ marginRight: 6 }}
+                />
+                <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text }}>
                   {language === 'ne' && b.nameNepali ? b.nameNepali : language === 'hi' && b.nameHindi ? b.nameHindi : b.name}
                 </Text>
               </View>
@@ -196,9 +202,12 @@ export const RiderProfileView: React.FC<RiderProfileViewProps> = ({
 
       {/* Permanent Truth Disclosure */}
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
-          ℹ️ {profile.syntheticDisclosure}
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, textAlign: 'center' }}>
+            {profile.syntheticDisclosure}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -239,6 +248,10 @@ const styles = StyleSheet.create({
     paddingTop: primitive.spacing[2],
     borderTopWidth: 1,
   },
+  contactRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   sectionTitle: {
     marginTop: primitive.spacing[2],
     marginBottom: primitive.spacing[3],
@@ -275,11 +288,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  badgeIcon: {
-    fontSize: 16,
-  },
   cardFooter: {
     paddingTop: primitive.spacing[3],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

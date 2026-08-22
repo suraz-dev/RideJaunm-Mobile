@@ -28,6 +28,7 @@ import { MapRenderInput } from '../../domain/map';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -154,12 +155,17 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
             />
           </Svg>
           <View style={[styles.partialNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <Badge label="⚠️ PARTIAL OFFLINE COVERAGE" variant="warning" size="sm" />
+            <Badge
+              label="PARTIAL OFFLINE COVERAGE"
+              variant="warning"
+              size="sm"
+              icon={<Icon name="alert-triangle" size={11} color={primitive.color.semantic.warning} />}
+            />
             <Text variant="bodySmall" style={{ color: colors.text, marginTop: primitive.spacing[1], fontWeight: '600' }}>
               {coverage?.missingAreaLabel || 'Missing high altitude sector'}
             </Text>
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: primitive.spacing[1] }}>
-              Synthetic base coverage rendered · Simulated missing sector boundary
+              Base coverage rendered · Simulated missing sector boundary
             </Text>
           </View>
         </View>
@@ -169,13 +175,18 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
       {baseState === 'stale' && (
         <View style={[styles.staleNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: primitive.color.semantic.warning }]}>
           <View style={styles.staleHeaderRow}>
-            <Badge label="⚠️ STALE MAP CACHE" variant="warning" size="sm" />
+            <Badge
+              label="STALE MAP CACHE"
+              variant="warning"
+              size="sm"
+              icon={<Icon name="alert-triangle" size={11} color={primitive.color.semantic.warning} />}
+            />
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
               {provenance.sourceVersion}
             </Text>
           </View>
           <Text variant="bodySmall" style={{ color: colors.text, marginTop: primitive.spacing[1] }}>
-            Simulated stale map fixture. Demonstrates expired cache presentation.
+            Cached map expired. Update required.
           </Text>
         </View>
       )}
@@ -185,10 +196,10 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
         <View style={[styles.fallbackCenterCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <ActivityIndicator size="small" color={colors.interactive} />
           <Text variant="mono" style={{ color: colors.text, marginTop: primitive.spacing[2], fontWeight: '700' }}>
-            INITIALIZING FIXTURE MAP SURFACE...
+            INITIALIZING OFFLINE MAP...
           </Text>
           <Text variant="bodySmall" muted style={{ marginTop: primitive.spacing[1] }}>
-            Loading synthetic topographic contours
+            Loading offline topographic contours
           </Text>
         </View>
       )}
@@ -205,25 +216,25 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
           ]}
         >
           <Badge
-            label={baseState === 'error' ? 'RENDER FAULT' : networkPolicy === 'cache_only' ? 'SIMULATED UNCACHED SECTOR' : 'MAP UNAVAILABLE'}
+            label={baseState === 'error' ? 'RENDER FAULT' : networkPolicy === 'cache_only' ? 'UNCACHED SECTOR' : 'MAP UNAVAILABLE'}
             variant={baseState === 'error' ? 'danger' : 'neutral'}
             size="md"
           />
           <Text variant="h3" style={{ color: colors.text, marginTop: primitive.spacing[2], textAlign: 'center' }}>
             {baseState === 'error'
-              ? 'Simulated Render Fault'
-              : 'Simulated Uncached Sector'}
+              ? 'Render Fault'
+              : 'Uncached Sector'}
           </Text>
           <Text variant="bodySmall" muted style={{ marginTop: primitive.spacing[1], textAlign: 'center', marginHorizontal: primitive.spacing[2] }}>
             {baseState === 'error'
-              ? 'Demonstrates deterministic map error state for test verification.'
+              ? 'Map rendering encountered an issue. Tap retry to reload.'
               : coverage?.missingAreaLabel
-              ? `Demonstrates unavailable sector state for ${coverage.missingAreaLabel}.`
-              : 'Demonstrates unavailable sector state with no local cache.'}
+              ? `Offline map sector missing for ${coverage.missingAreaLabel}.`
+              : 'Offline map sector missing. Download required for this area.'}
           </Text>
           {onRetry && (
             <Button
-              label="RETRY FIXTURE RENDER"
+              label="RETRY MAP RENDER"
               onPress={onRetry}
               variant="secondary"
               style={{ marginTop: primitive.spacing[3], minHeight: primitive.size.targetMin }}

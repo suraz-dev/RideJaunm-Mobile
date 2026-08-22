@@ -1,14 +1,13 @@
 /**
  * ============================================================================
- * GARAGE VEHICLES VIEW (R14)
+ * GARAGE VEHICLES VIEW (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Pre-authored motorcycle fleet (Himalayan 450, KTM 390 Adventure).
- * 2. Estimated fuel level indicators and maintenance states (good, stale_unknown).
+ * 1. Motorcycle fleet (Himalayan 450, KTM 390 Adventure) with vector icons.
+ * 2. Estimated fuel level indicators and maintenance states.
  * 3. Disabled vehicle action affordances with notice: "Preview only — nothing was saved."
  * 4. AD/BS date format selection.
- * 5. 48dp minimum touch targets across all 4 themes (Night, Day Glare, Dusk, Blackout).
  */
 
 import React, { useState } from 'react';
@@ -16,6 +15,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { FixtureMotorcycle, CalendarSystemPreview, AppPreviewLanguage } from '../../domain/profileSettings';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -38,11 +38,32 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
   const getMaintenanceBadge = (state: FixtureMotorcycle['maintenanceState']) => {
     switch (state) {
       case 'good':
-        return <Badge label="MAINTENANCE GOOD" variant="volt" size="sm" />;
+        return (
+          <Badge
+            label="MAINTENANCE GOOD"
+            variant="volt"
+            size="sm"
+            icon={<Icon name="check" size={10} color={primitive.color.volt[400]} />}
+          />
+        );
       case 'due_soon':
-        return <Badge label="SERVICE DUE SOON" variant="warning" size="sm" />;
+        return (
+          <Badge
+            label="SERVICE DUE SOON"
+            variant="warning"
+            size="sm"
+            icon={<Icon name="alert-triangle" size={10} color={primitive.color.semantic.warning} />}
+          />
+        );
       case 'stale_unknown':
-        return <Badge label="MAINTENANCE UNKNOWN" variant="warning" size="sm" />;
+        return (
+          <Badge
+            label="MAINTENANCE UNKNOWN"
+            variant="warning"
+            size="sm"
+            icon={<Icon name="alert-triangle" size={10} color={primitive.color.semantic.warning} />}
+          />
+        );
     }
   };
 
@@ -66,9 +87,12 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {actionNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.semantic.warning} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
+              {actionNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -102,20 +126,20 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
           {/* Specs & Metrics Grid */}
           <View style={[styles.specsRow, { borderTopColor: colors.borderSubtle }]}>
             <View style={styles.specBox}>
-              <Text variant="bodySmall" muted>ENGINE</Text>
-              <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text }}>
+              <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>ENGINE</Text>
+              <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text, marginTop: 2 }}>
                 {v.displacementCc} cc
               </Text>
             </View>
             <View style={styles.specBox}>
-              <Text variant="bodySmall" muted>ODOMETER</Text>
-              <Text variant="bodyMedium" style={{ fontWeight: '700', color: primitive.color.cyan[400] }}>
+              <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>ODOMETER</Text>
+              <Text variant="bodyMedium" style={{ fontWeight: '700', color: primitive.color.cyan[400], marginTop: 2 }}>
                 {v.odometerKm.toLocaleString()} km
               </Text>
             </View>
             <View style={styles.specBox}>
-              <Text variant="bodySmall" muted>LAST SERVICE</Text>
-              <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text }}>
+              <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>LAST SERVICE</Text>
+              <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.text, marginTop: 2 }}>
                 {calendarSystem === 'BS' ? v.lastServiceDateBs : v.lastServiceDateAd}
               </Text>
             </View>
@@ -124,7 +148,10 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
           {/* Estimated Fuel Level Gauge */}
           <View style={styles.fuelGaugeSection}>
             <View style={styles.fuelHeaderRow}>
-              <Text variant="bodySmall" muted>ESTIMATED FUEL LEVEL (SIMULATED)</Text>
+              <View style={styles.fuelLabelRow}>
+                <Icon name="flame" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>ESTIMATED FUEL LEVEL</Text>
+              </View>
               <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 11, fontWeight: '700' }}>
                 {v.estimatedFuelLevelPercent}% (~{((v.fuelCapacityLiters * v.estimatedFuelLevelPercent) / 100).toFixed(1)} L)
               </Text>
@@ -145,11 +172,14 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
             </View>
           </View>
 
-          <Text variant="bodySmall" muted style={{ marginTop: primitive.spacing[2] }}>
-            📝 {v.notes}
-          </Text>
+          <View style={styles.notesRow}>
+            <Icon name="file-text" size={12} color={colors.textSubtle} style={{ marginRight: 4, marginTop: 2 }} />
+            <Text variant="bodySmall" muted style={{ flex: 1 }}>
+              {v.notes}
+            </Text>
+          </View>
 
-          {/* Disabled Vehicle Actions */}
+          {/* Vehicle Actions */}
           <View style={[styles.actionsRow, { borderTopColor: colors.borderSubtle }]}>
             <TouchableOpacity
               style={[styles.actionBtn, { borderColor: colors.borderSubtle }]}
@@ -158,9 +188,12 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Edit ${v.makeModel} specifications preview`}
             >
-              <Text variant="mono" style={{ color: colors.text, fontSize: 11 }}>
-                ✏️ Edit Specs
-              </Text>
+              <View style={styles.actionBtnRow}>
+                <Icon name="edit" size={12} color={colors.text} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.text, fontSize: 11 }}>
+                  Edit
+                </Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -170,9 +203,12 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`View ${v.makeModel} service log preview`}
             >
-              <Text variant="mono" style={{ color: colors.text, fontSize: 11 }}>
-                🔧 Service Log
-              </Text>
+              <View style={styles.actionBtnRow}>
+                <Icon name="settings" size={12} color={colors.text} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.text, fontSize: 11 }}>
+                  Service
+                </Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -182,17 +218,23 @@ export const GarageVehiclesView: React.FC<GarageVehiclesViewProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Delete ${v.makeModel} preview`}
             >
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                🗑️ Remove
-              </Text>
+              <View style={styles.actionBtnRow}>
+                <Icon name="x" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                  Remove
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
           {/* Permanent Disclosure */}
           <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-              ℹ️ {v.syntheticDisclosure}
-            </Text>
+            <View style={styles.footerRow}>
+              <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+                {v.syntheticDisclosure}
+              </Text>
+            </View>
           </View>
         </View>
       ))}
@@ -212,6 +254,10 @@ const styles = StyleSheet.create({
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     marginBottom: primitive.spacing[3],
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   vehicleCard: {
     borderRadius: primitive.radius.lg,
@@ -243,6 +289,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: primitive.spacing[1],
   },
+  fuelLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   fuelTrack: {
     height: 6,
     borderRadius: 3,
@@ -251,6 +301,11 @@ const styles = StyleSheet.create({
   fuelFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: primitive.spacing[2],
   },
   actionsRow: {
     flexDirection: 'row',
@@ -267,9 +322,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  actionBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cardFooter: {
     marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

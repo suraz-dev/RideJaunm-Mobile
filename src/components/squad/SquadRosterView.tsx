@@ -17,6 +17,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { FixtureSquadGroup, FixtureSquadPresence } from '../../domain/squadCommunity';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { MapSurface } from '../map/MapSurface';
 import { MarkerLayer } from '../map/MarkerLayer';
 import { MapRenderInput } from '../../domain/map';
@@ -38,18 +39,19 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
   const getPresenceBadge = (presence: FixtureSquadPresence['presence']) => {
     switch (presence) {
       case 'cached':
-        return <Badge label="CACHED FIXTURE" variant="neutral" size="sm" />;
+        return <Badge label="CACHED LOCATION" variant="volt" size="sm" />;
       case 'last_known':
-        return <Badge label="LAST-KNOWN FIXTURE" variant="neutral" size="sm" />;
+        return <Badge label="LAST-KNOWN LOCATION" variant="cyan" size="sm" />;
       case 'mesh_preview':
-        return <Badge label="MESH PREVIEW" variant="cyan" size="sm" />;
+        return <Badge label="MESH RADAR" variant="warning" size="sm" />;
       case 'unavailable':
-        return <Badge label="UNAVAILABLE" variant="warning" size="sm" />;
+      default:
+        return <Badge label="OFFLINE" variant="neutral" size="sm" />;
     }
   };
 
   const handleMemberAction = (action: string, memberName: string) => {
-    setActionNotice(`${action} for ${memberName} is unavailable in fixture preview`);
+    setActionNotice(`${action} for ${memberName} is unavailable in local preview`);
   };
 
   // Map preview inputs — strictly unconditional cache_only policy with explicit fixture provenance
@@ -65,7 +67,7 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
       baseState: 'fresh',
       coverage: { isCovered: true },
       provenance: {
-        source: 'OpenStreetMap Vector Contours (Squad Fixture Roster)',
+        source: 'OpenStreetMap Vector Contours (Squad Roster)',
         sourceVersion: 'OSM-NP-2026.08.15',
         licence: 'Open Database Licence (ODbL) 1.0',
         attribution: '© OpenStreetMap contributors',
@@ -119,15 +121,18 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
               </Text>
             )}
           </View>
-          <Badge label="FIXTURE ROSTER" variant="volt" size="sm" />
+          <Badge label="CACHED ROSTER" variant="volt" size="sm" />
         </View>
 
         <Text variant="bodyMedium" muted style={{ marginTop: primitive.spacing[2] }}>
           {group.description}
         </Text>
-        <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, marginTop: 4 }}>
-          🛣️ {group.corridor}
-        </Text>
+        <View style={styles.corridorRow}>
+          <Icon name="route" size={12} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11 }}>
+            {group.corridor}
+          </Text>
+        </View>
       </View>
 
       {/* Action Notice */}
@@ -141,9 +146,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {actionNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+              {actionNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -152,7 +160,7 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
         <View style={styles.mapSection}>
           <View style={styles.mapHeader}>
             <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>
-              SQUAD MAP BOUNDS PREVIEW
+              SQUAD MAP PREVIEW
             </Text>
             <Badge label="CACHE-ONLY MAP" variant="neutral" size="sm" />
           </View>
@@ -162,7 +170,7 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
             </MapSurface>
           </View>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-            Fixture presence preview — not live rider tracking · © OpenStreetMap contributors
+            Local presence preview — not live rider tracking · © OpenStreetMap contributors
           </Text>
         </View>
       )}
@@ -180,9 +188,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
             accessibilityRole="button"
             accessibilityLabel={showMapPreview ? 'Hide squad map preview' : 'Show squad map preview'}
           >
-            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
-              {showMapPreview ? '✕ Hide Map' : '🗺️ Show Map Preview'}
-            </Text>
+            <View style={styles.toggleBtnRow}>
+              <Icon name={showMapPreview ? 'x' : 'navigation'} size={12} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
+                {showMapPreview ? 'Hide Map' : 'Show Map Preview'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -236,9 +247,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Call ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  📞 Call (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="mic" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Call (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -248,9 +262,12 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Ping ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  📍 Ping (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="map-pin" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Ping (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -260,16 +277,22 @@ export const SquadRosterView: React.FC<SquadRosterViewProps> = ({ group }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Navigate to ${member.displayName} preview`}
               >
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                  🧭 Navigate (Preview)
-                </Text>
+                <View style={styles.actionBtnRow}>
+                  <Icon name="navigation" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    Navigate (Preview)
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
 
             <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
-                ℹ️ {member.syntheticDisclosure}
-              </Text>
+              <View style={styles.footerRow}>
+                <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
+                  {member.syntheticDisclosure}
+                </Text>
+              </View>
             </View>
           </View>
         ))}
@@ -366,5 +389,26 @@ const styles = StyleSheet.create({
     marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[1],
     borderTopWidth: 0.5,
+  },
+  actionBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  corridorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  toggleBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

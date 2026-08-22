@@ -16,6 +16,7 @@ import { View, StyleSheet } from 'react-native';
 import { FixtureChatMessage } from '../../domain/squadCommunity';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -34,9 +35,9 @@ export const ChatTranscriptView: React.FC<ChatTranscriptViewProps> = ({ messages
       case 'local_draft':
         return <Badge label="LOCAL DRAFT" variant="cyan" size="sm" />;
       case 'preview_queued':
-        return <Badge label="PREVIEW QUEUED" variant="neutral" size="sm" />;
+        return <Badge label="QUEUED" variant="neutral" size="sm" />;
       case 'failed_preview':
-        return <Badge label="FAILED PREVIEW" variant="warning" size="sm" />;
+        return <Badge label="TRANSFER FAILED" variant="warning" size="sm" />;
     }
   };
 
@@ -86,9 +87,12 @@ export const ChatTranscriptView: React.FC<ChatTranscriptViewProps> = ({ messages
 
               {/* Timestamp and synthetic disclosure */}
               <View style={[styles.bubbleFooter, { borderTopColor: colors.borderSubtle }]}>
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
-                  ℹ️ {msg.syntheticDisclosure}
-                </Text>
+                <View style={styles.footerRow}>
+                  <Icon name="info" size={9} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 9 }}>
+                    {msg.syntheticDisclosure}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -129,5 +133,9 @@ const styles = StyleSheet.create({
     marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[1],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

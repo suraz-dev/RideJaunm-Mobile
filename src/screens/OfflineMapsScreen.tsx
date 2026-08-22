@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { Text } from '../components/primitives/Text';
 import { Badge } from '../components/primitives/Badge';
+import { Icon } from '../components/primitives/Icon';
 import { StorageSummaryBar } from '../components/offline/StorageSummaryBar';
 import { OfflineRegionCard } from '../components/offline/OfflineRegionCard';
 import { MapSurface } from '../components/map/MapSurface';
@@ -41,74 +42,80 @@ export interface OfflineMapsScreenProps {
   onBackToMain?: () => void;
 }
 
-export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
-  onBackToMain,
-}) => {
+export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({ onBackToMain }) => {
   const { colors, mode } = useTheme();
   const { connectionState } = useAppState();
+  const isOffline =
+    connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
   const isDayGlare = mode === 'dayGlare';
 
-  // State: List of regions (cloned on mount for isolated component-local state)
+  // 1. Component-local state for active filter tab
+  const [activeTab, setActiveTab] = useState<OfflineFilterTab>('all');
+
+  // 2. Component-local state for offline region items
   const [regions, setRegions] = useState<OfflineRegion[]>(() =>
     allOfflineRegionFixtures.map((r) => ({ ...r }))
   );
-  const [activeTab, setActiveTab] = useState<OfflineFilterTab>('all');
+
+  // 3. Component-local selected region for map preview
   const [selectedRegionId, setSelectedRegionId] = useState<string>(
     allOfflineRegionFixtures[0].id
   );
-  const [showMapBoundsPreview, setShowMapBoundsPreview] = useState(false);
+
+  // 4. Component-local toggle for map bounds preview surface
+  const [showMapBoundsPreview, setShowMapBoundsPreview] = useState<boolean>(true);
+
+  // 5. Action notice toast
   const [actionNotice, setActionNotice] = useState<string | null>(null);
 
-  const isOffline =
-    connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
+  const selectedRegion = useMemo(() => {
+    return regions.find((r) => r.id === selectedRegionId) ?? regions[0];
+  }, [regions, selectedRegionId]);
 
-  // Filter tabs definition
+  const handleLifecycleChange = (id: string, newLifecycle: OfflinePackLifecycle) => {
+    setRegions((prev) =>
+      prev.map((r) => {
+        if (r.id === id) {
+          let progress = r.progressPercentage;
+          if (newLifecycle === 'downloading' && (progress === undefined || progress === 0)) {
+            progress = 35;
+          }
+          return { ...r, lifecycle: newLifecycle, progressPercentage: progress };
+        }
+        return r;
+      })
+    );
+  };
+
+  const handleSelectRegion = (region: OfflineRegion) => {
+    setSelectedRegionId(region.id);
+    setActionNotice(`Focused bounds for ${region.name}`);
+  };
+
   const filterTabs: { tab: OfflineFilterTab; label: string; labelNepali: string }[] = [
-    { tab: 'all', label: 'All', labelNepali: 'सबै' },
-    { tab: 'downloading', label: 'Downloading', labelNepali: 'डाउनलोड' },
-    { tab: 'stale', label: 'Stale', labelNepali: 'पुरानो' },
-    { tab: 'issues', label: 'Issues', labelNepali: 'समस्याहरू' },
+    { tab: 'all', label: 'All Packs', labelNepali: 'सबै' },
+    { tab: 'downloading', label: 'Downloading', labelNepali: 'डाउनलोडिङ' },
+    { tab: 'stale', label: 'Updates', labelNepali: 'अपडेट' },
+    { tab: 'issues', label: 'Issues', labelNepali: 'समस्या' },
   ];
 
-  // Filtered regions list
   const filteredRegions = useMemo(() => {
     switch (activeTab) {
       case 'downloading':
         return regions.filter(
-          (r) =>
-            r.lifecycle === 'downloading' ||
-            r.lifecycle === 'queued' ||
-            r.lifecycle === 'paused'
+          (r) => r.lifecycle === 'downloading' || r.lifecycle === 'queued' || r.lifecycle === 'paused'
         );
       case 'stale':
         return regions.filter((r) => r.lifecycle === 'stale');
       case 'issues':
         return regions.filter(
-          (r) =>
-            r.lifecycle === 'failed' ||
-            r.lifecycle === 'storage_full' ||
-            r.lifecycle === 'partial'
+          (r) => r.lifecycle === 'failed' || r.lifecycle === 'storage_full' || r.lifecycle === 'partial'
         );
       case 'all':
       default:
         return regions;
     }
   }, [regions, activeTab]);
-
-  // Selected region for map preview
-  const selectedRegion = useMemo(() => {
-    return regions.find((r) => r.id === selectedRegionId) || regions[0];
-  }, [regions, selectedRegionId]);
-
-  // Lifecycle state transition handler (local state only)
-  const handleLifecycleChange = (
-    regionId: string,
-    nextLifecycle: OfflinePackLifecycle
-  ) => {
-    setRegions((prev) =>
-      prev.map((r) => (r.id === regionId ? { ...r, lifecycle: nextLifecycle } : r))
-    );
-  };
 
   const getLifecycleBadgeVariant = (lifecycle: OfflinePackLifecycle) => {
     switch (lifecycle) {
@@ -131,21 +138,21 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
   const getLifecycleLabel = (lifecycle: OfflinePackLifecycle, progress?: number) => {
     switch (lifecycle) {
       case 'complete':
-        return 'COMPLETE (FIXTURE)';
+        return 'DOWNLOADED';
       case 'downloading':
-        return `DOWNLOADING PREVIEW (${progress ?? 0}%)`;
+        return `DOWNLOADING (${progress ?? 0}%)`;
       case 'queued':
-        return 'QUEUED (FIXTURE)';
+        return 'QUEUED';
       case 'paused':
-        return `PAUSED PREVIEW (${progress ?? 0}%)`;
+        return `PAUSED (${progress ?? 0}%)`;
       case 'partial':
-        return `PARTIAL PREVIEW (${progress ?? 0}%)`;
+        return `PARTIAL CACHE (${progress ?? 0}%)`;
       case 'stale':
-        return 'STALE (FIXTURE UPDATE PREVIEW)';
+        return 'UPDATE AVAILABLE';
       case 'failed':
-        return 'FAILED (SIMULATED)';
+        return 'TRANSFER ERROR';
       case 'storage_full':
-        return 'STORAGE FULL (FIXTURE)';
+        return 'STORAGE FULL';
     }
   };
 
@@ -159,22 +166,25 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
       case 'downloading':
         return {
           baseState: 'fresh',
-          coverage: { isCovered: false, missingAreaLabel: 'Simulated pack downloading' },
+          coverage: { isCovered: false, missingAreaLabel: 'Downloading Sector' },
         };
       case 'queued':
         return {
           baseState: 'unavailable',
-          coverage: { isCovered: false, missingAreaLabel: 'Simulated pack queued' },
+          coverage: { isCovered: false, missingAreaLabel: 'Queued Sector' },
         };
       case 'paused':
         return {
           baseState: 'partial',
-          coverage: { isCovered: false, missingAreaLabel: 'Simulated download paused' },
+          coverage: { isCovered: false, missingAreaLabel: 'Paused Sector' },
         };
       case 'partial':
         return {
           baseState: 'partial',
-          coverage: { isCovered: false, missingAreaLabel: 'Missing passes unavailable' },
+          coverage: {
+            isCovered: false,
+            missingAreaLabel: 'Gosaikunda High Altitude Sector (Above 4,300m)',
+          },
         };
       case 'stale':
         return {
@@ -184,12 +194,12 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
       case 'failed':
         return {
           baseState: 'error',
-          coverage: { isCovered: false, missingAreaLabel: 'Simulated transfer fault' },
+          coverage: { isCovered: false, missingAreaLabel: 'Transfer Fault' },
         };
       case 'storage_full':
         return {
           baseState: 'unavailable',
-          coverage: { isCovered: false, missingAreaLabel: 'Simulated storage pressure' },
+          coverage: { isCovered: false, missingAreaLabel: 'Device Storage Full' },
         };
     }
   };
@@ -213,7 +223,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
       baseState,
       coverage,
       provenance: {
-        source: 'OpenStreetMap Vector Contours (Offline Region Fixture)',
+        source: 'OpenStreetMap Vector Contours (Offline Region)',
         sourceVersion: 'OSM-NP-2026.08.15',
         licence: 'Open Database Licence (ODbL) 1.0',
         attribution: '© OpenStreetMap contributors',
@@ -243,10 +253,10 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
     >
-      {/* Return Button */}
+      {/* Back to Navigation affordance */}
       {onBackToMain && (
         <TouchableOpacity
-          style={[styles.backBtn, { borderColor: colors.borderSubtle }]}
+          style={styles.backBtn}
           onPress={onBackToMain}
           accessible
           accessibilityRole="button"
@@ -260,10 +270,10 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
 
       {/* Screen Title & Subtitle */}
       <Text variant="h1" style={{ color: colors.text }}>
-        Offline Maps — Fixture Preview
+        Offline Maps — Local Preview
       </Text>
       <Text variant="bodyMedium" muted style={styles.subtitle}>
-        Simulated map region packs, storage management, and offline lifecycle inspection.
+        Offline map packs, storage management, and local cache status.
       </Text>
 
       {/* Offline/Mesh Mode Banner */}
@@ -282,7 +292,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
             Operating in offline dead-zone / mesh mode.
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            No network downloads available. All offline region metadata is rendered from local fixture storage.
+            No network connection. Operating from local offline storage.
           </Text>
         </View>
       )}
@@ -298,9 +308,12 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
             },
           ]}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
-            ℹ️ {actionNotice}
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="info" size={12} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '700' }}>
+              {actionNotice}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -326,7 +339,7 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
             </MapSurface>
           </View>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 4 }}>
-            Synthetic Bounding Box Preview · OpenStreetMap contributors
+            Local Bounding Box Preview · OpenStreetMap contributors
           </Text>
         </View>
       )}
@@ -383,9 +396,12 @@ export const OfflineMapsScreen: React.FC<OfflineMapsScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel={showMapBoundsPreview ? 'Hide region map bounds preview' : 'Show region map bounds preview'}
           >
-            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
-              {showMapBoundsPreview ? '✕ Hide Map' : '🗺️ Show Map Preview'}
-            </Text>
+            <View style={styles.toggleBtnRow}>
+              <Icon name={showMapBoundsPreview ? 'x' : 'navigation'} size={12} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
+                {showMapBoundsPreview ? 'Hide Map' : 'Show Map Preview'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -496,5 +512,13 @@ const styles = StyleSheet.create({
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     marginTop: primitive.spacing[2],
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  toggleBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

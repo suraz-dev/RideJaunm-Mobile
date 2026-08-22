@@ -1,14 +1,13 @@
 /**
  * ============================================================================
- * RIDE HISTORY LIST VIEW (R14)
+ * RIDE HISTORY LIST VIEW (R16 REFINED)
  * ============================================================================
  *
  * Coordinates:
- * 1. Pre-authored ride history records with route personality mode chips.
- * 2. Pre-authored AD and BS date strings.
- * 3. Empty state filter simulation with truthful disclosure.
- * 4. Permanent disclaimer: "Pre-authored ride history · Not GPS recorded".
- * 5. Full theme compliance across Night, Day Glare, Dusk, Blackout.
+ * 1. Pre-authored ride history records with route mode badges.
+ * 2. Empty history simulation toggle for UI state testing.
+ * 3. AD/BS date format selection.
+ * 4. Permanent truth disclosure: "Pre-authored history — no GPS records stored."
  */
 
 import React, { useState } from 'react';
@@ -16,8 +15,9 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { FixtureRideHistoryItem, CalendarSystemPreview, AppPreviewLanguage } from '../../domain/profileSettings';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
-import { primitive } from '../../design/tokens';
+import { primitive, routePresentation } from '../../design/tokens';
 
 export interface RideHistoryListViewProps {
   historyItems: FixtureRideHistoryItem[];
@@ -38,24 +38,20 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
   const displayedItems = simulateEmpty ? [] : historyItems;
 
   const getRouteModeBadge = (routeMode: FixtureRideHistoryItem['routeMode']) => {
-    switch (routeMode) {
-      case 'curvy':
-        return <Badge label="CURVY" variant="volt" size="sm" />;
-      case 'supercurvy':
-        return <Badge label="SUPERCURVY" variant="supercurvy" size="sm" />;
-      case 'straight':
-        return <Badge label="STRAIGHT" variant="cyan" size="sm" />;
-    }
+    const config = routePresentation[routeMode];
+    const variant = routeMode === 'supercurvy' ? 'supercurvy' : routeMode === 'curvy' ? 'volt' : 'cyan';
+    return <Badge label={config.label.toUpperCase()} variant={variant} size="sm" />;
   };
 
   const getHistoryStateBadge = (state: FixtureRideHistoryItem['state']) => {
     switch (state) {
       case 'cached':
-        return <Badge label="CACHED" variant="neutral" size="sm" />;
+        return <Badge label="CACHED" variant="volt" size="sm" />;
       case 'stale':
         return <Badge label="STALE" variant="warning" size="sm" />;
       case 'draft':
-        return <Badge label="DRAFT" variant="cyan" size="sm" />;
+      default:
+        return <Badge label="DRAFT" variant="neutral" size="sm" />;
     }
   };
 
@@ -67,7 +63,6 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header Row + Empty State Toggle */}
       <View style={styles.headerRow}>
         <Text variant="h2" style={{ color: colors.text }}>
           {language === 'ne' ? 'सवारी इतिहास' : language === 'hi' ? 'राइड इतिहास' : 'Ride History'} ({displayedItems.length})
@@ -80,7 +75,7 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
           accessibilityLabel={simulateEmpty ? 'Show ride history records' : 'Simulate empty ride history'}
         >
           <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
-            {simulateEmpty ? '↺ Show History' : '∅ Simulate Empty'}
+            {simulateEmpty ? 'Show History' : 'Simulate Empty'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -99,14 +94,12 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
           accessibilityRole="summary"
           accessibilityLabel="No ride history recorded in fixture preview"
         >
-          <Text variant="mono" style={{ fontSize: 24, textAlign: 'center', marginBottom: 8 }}>
-            🏍️
-          </Text>
+          <Icon name="bike" size={32} color={colors.textSubtle} style={{ marginBottom: 8 }} />
           <Text variant="h3" style={{ color: colors.text, textAlign: 'center' }}>
             No ride history recorded
           </Text>
           <Text variant="bodyMedium" muted style={{ textAlign: 'center', marginTop: 4 }}>
-            Empty history fixture state · Completed rides will appear here once live recording capabilities are added.
+            Empty history state · Completed rides will appear here once recording capabilities are active.
           </Text>
         </View>
       ) : (
@@ -130,9 +123,15 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
                 <Text variant="h3" style={{ color: colors.text }}>
                   {getTitle(item)}
                 </Text>
-                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: 2 }}>
-                  {item.startLocation} ➔ {item.endLocation}
-                </Text>
+                <View style={styles.locationRow}>
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    {item.startLocation}
+                  </Text>
+                  <Icon name="arrow-right" size={11} color={colors.textSubtle} style={{ marginHorizontal: 4 }} />
+                  <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                    {item.endLocation}
+                  </Text>
+                </View>
               </View>
               <View style={styles.badgeCol}>
                 {getRouteModeBadge(item.routeMode)}
@@ -144,26 +143,26 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
             {/* Metrics Row */}
             <View style={[styles.metricsRow, { borderTopColor: colors.borderSubtle }]}>
               <View style={styles.metricBox}>
-                <Text variant="bodySmall" muted>DATE</Text>
-                <Text variant="mono" style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>
+                <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>DATE</Text>
+                <Text variant="mono" style={{ color: colors.text, fontSize: 12, fontWeight: '700', marginTop: 2 }}>
                   {calendarSystem === 'BS' ? item.dateBs : item.dateAd}
                 </Text>
               </View>
               <View style={styles.metricBox}>
-                <Text variant="bodySmall" muted>DISTANCE</Text>
-                <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '700' }}>
+                <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>DISTANCE</Text>
+                <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 12, fontWeight: '700', marginTop: 2 }}>
                   {item.distanceKm} km
                 </Text>
               </View>
               <View style={styles.metricBox}>
-                <Text variant="bodySmall" muted>DURATION</Text>
-                <Text variant="mono" style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>
+                <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>DURATION</Text>
+                <Text variant="mono" style={{ color: colors.text, fontSize: 12, fontWeight: '700', marginTop: 2 }}>
                   {item.durationHours} hrs
                 </Text>
               </View>
               <View style={styles.metricBox}>
-                <Text variant="bodySmall" muted>ELEVATION</Text>
-                <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 12, fontWeight: '700' }}>
+                <Text variant="bodySmall" muted style={{ fontWeight: '700', letterSpacing: 0.5 }}>ELEVATION</Text>
+                <Text variant="mono" style={{ color: primitive.color.volt[400], fontSize: 12, fontWeight: '700', marginTop: 2 }}>
                   +{item.elevationGainM} m
                 </Text>
               </View>
@@ -171,9 +170,12 @@ export const RideHistoryListView: React.FC<RideHistoryListViewProps> = ({
 
             {/* Permanent Disclosure */}
             <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-                ℹ️ {item.syntheticDisclosure}
-              </Text>
+              <View style={styles.footerRow}>
+                <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+                <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+                  {item.syntheticDisclosure}
+                </Text>
+              </View>
             </View>
           </View>
         ))
@@ -215,6 +217,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: primitive.spacing[3],
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
   badgeCol: {
     alignItems: 'flex-end',
   },
@@ -222,13 +229,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     paddingTop: primitive.spacing[3],
+    marginBottom: primitive.spacing[2],
   },
   metricBox: {
     flex: 1,
   },
   cardFooter: {
-    marginTop: primitive.spacing[3],
+    marginTop: primitive.spacing[2],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

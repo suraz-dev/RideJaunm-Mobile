@@ -67,10 +67,10 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     const view = await render(<ProfileGarageScreen />, { wrapper: createWrapper() });
 
     expect(view.getByText('Profile & Garage')).toBeTruthy();
-    expect(view.getByText('SYNTHETIC PREVIEW')).toBeTruthy();
+    expect(view.getByText('LOCAL PREVIEW')).toBeTruthy();
     expect(
       view.getByText(
-        /Deterministic local fixtures · Not connected to backend user accounts or live telemetry\./
+        /Local profile preview · Not connected to cloud accounts or live telemetry\./
       )
     ).toBeTruthy();
 
@@ -93,7 +93,7 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     expect(view.getByText('38,400 m')).toBeTruthy();
     expect(view.getByText('Himalayan Explorer')).toBeTruthy();
     expect(
-      view.getByText(/Synthetic profile preview · Not a registered backend account/)
+      view.getByText(/Local profile preview · Offline rider instrument/)
     ).toBeTruthy();
   });
 
@@ -148,7 +148,7 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     expect(view.getByText('No ride history recorded')).toBeTruthy();
     expect(
       view.getByText(
-        /Empty history fixture state · Completed rides will appear here once live recording capabilities are added\./
+        /Empty history state · Completed rides will appear here once recording capabilities are active\./
       )
     ).toBeTruthy();
   });
@@ -232,10 +232,10 @@ describe('RideJaunm R14 Fixture Profile, Garage, History & Settings', () => {
     });
 
     expect(
-      view.getByText(/Live background services & sharing are unavailable in this preview\./)
+      view.getByText(/Live background services & sharing are offline in this preview\./)
     ).toBeTruthy();
     expect(
-      view.getByText(/Native BLE radio discovery is unverified in this fixture preview\./)
+      view.getByText(/Mesh radar discovery is offline in this preview\./)
     ).toBeTruthy();
   });
 

@@ -127,7 +127,7 @@ describe('RideJaunm R9 Map Home & Local Ride Mode Lifecycle', () => {
     });
 
     expect(view.getByText('LAST KNOWN FIX')).toBeTruthy();
-    expect(view.getByText('⚠️ STALE MAP CACHE')).toBeTruthy();
+    expect(view.getByText('STALE MAP CACHE')).toBeTruthy();
     expect(view.getByText('Last Known Position')).toBeTruthy();
   });
 
@@ -146,7 +146,7 @@ describe('RideJaunm R9 Map Home & Local Ride Mode Lifecycle', () => {
     );
 
     expect(view.getByText('GPS UNAVAILABLE')).toBeTruthy();
-    expect(view.getByText('⚠️ PARTIAL OFFLINE COVERAGE')).toBeTruthy();
+    expect(view.getByText('PARTIAL OFFLINE COVERAGE')).toBeTruthy();
     expect(view.getByText('Thorong La Pass (5,416m)')).toBeTruthy();
     // No rider marker rendered in lost state
     expect(view.queryByText('You (तपाईं)')).toBeNull();
@@ -160,7 +160,7 @@ describe('RideJaunm R9 Map Home & Local Ride Mode Lifecycle', () => {
 
     expect(view.getByText('GPS UNAVAILABLE')).toBeTruthy();
     expect(view.getByText('RENDER FAULT')).toBeTruthy();
-    expect(view.getByText('Simulated Render Fault')).toBeTruthy();
+    expect(view.getByText('Render Fault')).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 });

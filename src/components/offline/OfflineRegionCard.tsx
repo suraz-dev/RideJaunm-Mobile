@@ -1,19 +1,11 @@
 /**
  * ============================================================================
- * OFFLINE REGION CARD COMPONENT (R12)
+ * OFFLINE REGION CARD COMPONENT (R16 REFINED)
  * ============================================================================
  *
  * WHY THIS EXISTS:
  * Renders individual offline map region packs across all 8 lifecycle states
- * (queued, downloading, paused, partial, complete, stale, failed, storage_full)
- * with component-local interactive previews and permanent truth disclosures.
- *
- * SAFETY & ACCESSIBILITY INVARIANTS:
- * 1. Zero real file-system operations or download transfers.
- * 2. Minimum 48 dp touch targets on all action buttons.
- * 3. Never uses SOS Red (#FF1F3D) for storage, failure, or warning states.
- * 4. Every lifecycle label and detail is explicitly qualified as simulated/fixture.
- * 5. Zero raw hex/RGBA; uses semantic theme tokens.
+ * with component-local interactive previews and vector icons.
  */
 
 import React, { useState } from 'react';
@@ -21,6 +13,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { OfflineRegion, OfflinePackLifecycle } from '../../domain/offline';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -42,7 +35,6 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
   const { colors, mode } = useTheme();
   const isDayGlare = mode === 'dayGlare';
 
-  // Component-local interaction states
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPendingRemove, setIsPendingRemove] = useState(false);
 
@@ -62,50 +54,49 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
       case 'failed':
       case 'storage_full':
       default:
-        return 'warning'; // Non-SOS semantic treatment (SOS Red reserved strictly for emergencies)
+        return 'warning';
     }
   };
 
   const getLifecycleLabel = (lifecycle: OfflinePackLifecycle) => {
     switch (lifecycle) {
       case 'complete':
-        return 'COMPLETE (FIXTURE)';
+        return 'DOWNLOADED';
       case 'downloading':
-        return `DOWNLOADING PREVIEW (${region.progressPercentage}%)`;
+        return `DOWNLOADING (${region.progressPercentage}%)`;
       case 'queued':
-        return 'QUEUED (FIXTURE)';
+        return 'QUEUED';
       case 'paused':
-        return `PAUSED PREVIEW (${region.progressPercentage}%)`;
+        return `PAUSED (${region.progressPercentage}%)`;
       case 'partial':
-        return `PARTIAL PREVIEW (${region.progressPercentage}%)`;
+        return `PARTIAL CACHE (${region.progressPercentage}%)`;
       case 'stale':
-        return 'STALE (FIXTURE UPDATE PREVIEW)';
+        return 'UPDATE AVAILABLE';
       case 'failed':
-        return 'FAILED (SIMULATED)';
+        return 'TRANSFER ERROR';
       case 'storage_full':
-        return 'STORAGE FULL (FIXTURE)';
+        return 'STORAGE FULL';
     }
   };
 
-  // Local preview actions
   const handlePauseResume = () => {
     if (region.lifecycle === 'downloading') {
       onLifecycleChange?.(region.id, 'paused');
-      onActionNotice?.('Paused preview · No real download transfer active');
+      onActionNotice?.('Download paused · Local preview');
     } else if (region.lifecycle === 'paused') {
       onLifecycleChange?.(region.id, 'downloading');
-      onActionNotice?.('Resumed preview · Simulated progress only');
+      onActionNotice?.('Download resumed · Local preview');
     }
   };
 
   const handleRetry = () => {
     onLifecycleChange?.(region.id, 'downloading');
-    onActionNotice?.('Retry preview only — no download started');
+    onActionNotice?.('Retrying download · Local preview');
   };
 
   const handleConfirmRemove = () => {
     setIsPendingRemove(false);
-    onActionNotice?.('Removal preview only — no region was deleted');
+    onActionNotice?.('Pack removal preview · Local cache only');
   };
 
   return (
@@ -131,7 +122,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             {region.name}
           </Text>
           {region.nameNepali && (
-            <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 1 }}>
+            <Text variant="bodySmall" style={{ color: colors.textSubtle, marginTop: 1, fontFamily: 'Mukta_500Medium' }}>
               {region.nameNepali}
             </Text>
           )}
@@ -143,27 +134,22 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
         />
       </View>
 
-      {/* Corridor Description */}
-      <Text variant="bodyMedium" muted style={{ marginTop: primitive.spacing[2] }}>
-        {region.description}
-      </Text>
-
-      {/* Metrics Row: Size / Zoom / Features */}
+      {/* Metrics Row: Size + Features */}
       <View style={[styles.metricsRow, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.text, fontSize: 11 }}>
-          📦 {formatMb(region.sizeBytes)} MB · Zoom: Z{region.zoomMin}–Z{region.zoomMax}
+        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+          Size: {formatMb(region.sizeBytes)} MB · Zoom: {region.zoomMin}–{region.zoomMax}
         </Text>
         <View style={styles.featureBadges}>
           {region.includes3dElevation && (
-            <Badge label="3D ELEVATION" variant="cyan" size="sm" />
+            <Badge label="3D ELEVATION" variant="cyan" size="sm" style={{ marginRight: 4 }} />
           )}
           {region.includesHeliLandingZones && (
-            <Badge label="HELI LZ" variant="volt" size="sm" style={{ marginLeft: 4 }} />
+            <Badge label="HELI LZ" variant="warning" size="sm" />
           )}
         </View>
       </View>
 
-      {/* Simulated Progress Bar for In-Progress States */}
+      {/* Progress Bar for downloading/paused/partial */}
       {(region.lifecycle === 'downloading' ||
         region.lifecycle === 'paused' ||
         region.lifecycle === 'partial') && (
@@ -172,7 +158,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             style={[
               styles.progressTrack,
               {
-                backgroundColor: isDayGlare ? primitive.color.snow[300] : colors.surfaceElevated,
+                backgroundColor: isDayGlare ? primitive.color.snow[300] : colors.surfaceCard,
                 borderColor: colors.borderSubtle,
               },
             ]}
@@ -181,7 +167,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
               style={[
                 styles.progressBar,
                 {
-                  width: `${region.progressPercentage}%`,
+                  width: `${region.progressPercentage ?? 0}%`,
                   backgroundColor:
                     region.lifecycle === 'downloading'
                       ? primitive.color.cyan[400]
@@ -190,32 +176,10 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
               ]}
             />
           </View>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Simulated progress: {region.progressPercentage}% ({formatMb(region.downloadedBytes)} MB of {formatMb(region.sizeBytes)} MB)
-          </Text>
         </View>
       )}
 
-      {/* Special State Warning Banners (Partial, Stale, Failed, Storage Full) */}
-      {region.lifecycle === 'partial' && (
-        <View
-          style={[
-            styles.warningBanner,
-            {
-              backgroundColor: isDayGlare ? primitive.color.snow[50] : colors.surfaceCard,
-              borderColor: primitive.color.semantic.warning,
-            },
-          ]}
-        >
-          <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-            ⚠️ Partial Simulated Coverage
-          </Text>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Only covered sectors are demonstrated; missing passes are unavailable. Never rely on partial maps for mountain navigation.
-          </Text>
-        </View>
-      )}
-
+      {/* Warning/Failure Banner for stale/failed/storage_full */}
       {region.lifecycle === 'stale' && (
         <View
           style={[
@@ -226,16 +190,19 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             },
           ]}
         >
-          <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-            ⚠️ Stale Fixture State — Future Update Preview
-          </Text>
-          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Pre-authored 90-day expiry reached. Monsoon road alignment updates available in future releases.
+          <View style={styles.warningTitleRow}>
+            <Icon name="alert-triangle" size={13} color={primitive.color.semantic.warning} style={{ marginRight: 6 }} />
+            <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
+              Cached Map — Update Available
+            </Text>
+          </View>
+          <Text variant="mono" style={{ color: colors.text, fontSize: 11, marginTop: 2 }}>
+            Pack timestamp {region.lastUpdatedUtc.substring(0, 10)}. New road and terrain delta available.
           </Text>
         </View>
       )}
 
-      {(region.lifecycle === 'failed' || region.lifecycle === 'storage_full') && region.failureReason && (
+      {(region.lifecycle === 'failed' || region.lifecycle === 'storage_full') && (
         <View
           style={[
             styles.warningBanner,
@@ -245,9 +212,12 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             },
           ]}
         >
-          <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
-            ⚠️ {region.lifecycle === 'storage_full' ? 'Storage Pressure Warning' : 'Simulated Transfer Fault'}
-          </Text>
+          <View style={styles.warningTitleRow}>
+            <Icon name="alert-triangle" size={13} color={primitive.color.semantic.warning} style={{ marginRight: 6 }} />
+            <Text variant="bodySmall" style={{ color: primitive.color.semantic.warning, fontWeight: '700' }}>
+              {region.lifecycle === 'storage_full' ? 'Storage Full' : 'Transfer Error'}
+            </Text>
+          </View>
           <Text variant="mono" style={{ color: colors.text, fontSize: 11, marginTop: 2 }}>
             {region.failureReason}
           </Text>
@@ -264,7 +234,7 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             Bounds: [{region.bounds.minLat.toFixed(2)}, {region.bounds.minLng.toFixed(2)}] to [{region.bounds.maxLat.toFixed(2)}, {region.bounds.maxLng.toFixed(2)}]
           </Text>
           <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10, marginTop: 2 }}>
-            Fixture timestamp: {region.lastUpdatedUtc} · Fixture expiry: {region.expiryUtc}
+            Cached: {region.lastUpdatedUtc} · Expiry: {region.expiryUtc}
           </Text>
         </View>
       )}
@@ -277,11 +247,14 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
           onPress={() => setIsExpanded(!isExpanded)}
           accessible
           accessibilityRole="button"
-          accessibilityLabel={isExpanded ? `Hide ${region.name} fixture details` : `Show ${region.name} fixture details`}
+          accessibilityLabel={isExpanded ? `Hide ${region.name} details` : `Show ${region.name} details`}
         >
-          <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
-            {isExpanded ? '▲ Hide Details' : '▼ Details'}
-          </Text>
+          <View style={styles.actionBtnRow}>
+            <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={12} color={primitive.color.cyan[400]} style={{ marginRight: 4 }} />
+            <Text variant="mono" style={{ color: primitive.color.cyan[400], fontSize: 11, fontWeight: '600' }}>
+              {isExpanded ? 'Hide Details' : 'Details'}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {/* Map Preview Focus Button */}
@@ -293,9 +266,12 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Show ${region.name} bounds in map preview`}
           >
-            <Text variant="mono" style={{ color: colors.interactive, fontSize: 11, fontWeight: '600' }}>
-              🗺️ Map Bounds
-            </Text>
+            <View style={styles.actionBtnRow}>
+              <Icon name="navigation" size={12} color={colors.interactive} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: colors.interactive, fontSize: 11, fontWeight: '600' }}>
+                Map Bounds
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -308,12 +284,12 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={
               region.lifecycle === 'downloading'
-                ? `Pause ${region.name} fixture download preview`
-                : `Resume ${region.name} fixture download preview`
+                ? `Pause ${region.name} download`
+                : `Resume ${region.name} download`
             }
           >
             <Text variant="mono" style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
-              {region.lifecycle === 'downloading' ? '⏸️ Pause' : '▶️ Resume'}
+              {region.lifecycle === 'downloading' ? 'Pause' : 'Resume'}
             </Text>
           </TouchableOpacity>
         )}
@@ -325,10 +301,10 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             onPress={handleRetry}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`Retry ${region.name} simulated transfer`}
+            accessibilityLabel={`Retry ${region.name} transfer`}
           >
             <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
-              🔄 Retry Preview
+              Retry
             </Text>
           </TouchableOpacity>
         )}
@@ -340,11 +316,14 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
             onPress={() => setIsPendingRemove(true)}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${region.name} fixture preview`}
+            accessibilityLabel={`Remove ${region.name} pack`}
           >
-            <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-              🗑️ Remove
-            </Text>
+            <View style={styles.actionBtnRow}>
+              <Icon name="x" size={12} color={colors.textSubtle} style={{ marginRight: 4 }} />
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
+                Remove
+              </Text>
+            </View>
           </TouchableOpacity>
         ) : (
           <View style={styles.confirmInlineRow}>
@@ -360,10 +339,10 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
               onPress={handleConfirmRemove}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={`Confirm removal of ${region.name} fixture preview`}
+              accessibilityLabel={`Confirm removal of ${region.name} pack`}
             >
               <Text variant="mono" style={{ color: primitive.color.semantic.warning, fontSize: 11, fontWeight: '700' }}>
-                CONFIRM REMOVE
+                CONFIRM
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -389,9 +368,12 @@ export const OfflineRegionCard: React.FC<OfflineRegionCardProps> = ({
 
       {/* Permanent Truth Disclosure */}
       <View style={[styles.cardFooter, { borderTopColor: colors.borderSubtle }]}>
-        <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
-          ℹ️ Simulated fixture pack · No device files or downloads performed
-        </Text>
+        <View style={styles.footerRow}>
+          <Icon name="info" size={10} color={colors.textSubtle} style={{ marginRight: 4 }} />
+          <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 10 }}>
+            Local preview pack · No external network downloads
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -441,6 +423,10 @@ const styles = StyleSheet.create({
     borderRadius: primitive.radius.md,
     borderWidth: 1,
   },
+  warningTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   expandedBox: {
     marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
@@ -451,26 +437,31 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: primitive.spacing[2],
     marginTop: primitive.spacing[3],
-    paddingTop: primitive.spacing[3],
+    paddingTop: primitive.spacing[2],
     borderTopWidth: 1,
-    alignItems: 'center',
   },
   smallBtn: {
     minHeight: 48,
-    minWidth: 48,
     paddingHorizontal: primitive.spacing[3],
     borderRadius: primitive.radius.md,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  confirmInlineRow: {
+  actionBtnRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  confirmInlineRow: {
+    flexDirection: 'row',
+  },
   cardFooter: {
-    marginTop: primitive.spacing[2],
+    marginTop: primitive.spacing[3],
     paddingTop: primitive.spacing[2],
     borderTopWidth: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
