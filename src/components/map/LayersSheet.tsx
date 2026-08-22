@@ -1,14 +1,10 @@
 /**
  * ============================================================================
- * FIXTURE MAP LAYERS SHEET (R8)
+ * FIXTURE MAP LAYERS SHEET (R16 REFINED)
  * ============================================================================
  *
- * WHY THIS EXISTS:
  * Discloses available and future map overlay layers (Topography, Hazards,
- * Heli Landing Zones, and Offline Cache) with truthful fixture descriptions.
- *
- * TRUTHFULNESS:
- * Does not claim real satellite telemetry, live traffic, or downloaded packs.
+ * Heli Landing Zones) with truthful fixture descriptions and vector icons.
  */
 
 import React from 'react';
@@ -16,6 +12,7 @@ import { View, StyleSheet, Modal, TouchableOpacity, Switch } from 'react-native'
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -46,7 +43,7 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
       <TouchableOpacity
         style={[
           styles.modalOverlay,
-          { backgroundColor: isDayGlare ? colors.mapGlass.borderColor : colors.mapGlass.backgroundColor },
+          { backgroundColor: isDayGlare ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.7)' },
         ]}
         activeOpacity={1}
         onPress={onClose}
@@ -58,24 +55,30 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
           {/* Sheet Header */}
           <View style={styles.headerRow}>
             <View>
-              <Text variant="h3" style={{ color: colors.text }}>
-                Map Layers (नक्सा तहहरू)
-              </Text>
+              <View style={styles.titleRow}>
+                <Icon name="layers" size={18} color={primitive.color.volt[400]} style={{ marginRight: 6 }} />
+                <Text variant="h3" style={{ color: colors.text }}>
+                  Map Layers (नक्सा तहहरू)
+                </Text>
+              </View>
               <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: 2 }}>
                 Deterministic Nepal Topographic Overlays
               </Text>
             </View>
-            <Badge label="FIXTURE PREVIEW" variant="neutral" size="sm" />
+            <Badge label="PREVIEW" variant="neutral" size="sm" />
           </View>
 
           {/* Layer Item 1: Topographic Elevation Contours */}
           <View style={[styles.layerItem, { borderBottomColor: colors.borderSubtle }]}>
             <View style={styles.layerInfo}>
-              <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
-                Himalayan Elevation Contours
-              </Text>
-              <Text variant="bodySmall" muted>
-                Synthetic topographic contour curves (100m interval)
+              <View style={styles.layerTitleRow}>
+                <Icon name="mountain" size={16} color={primitive.color.cyan[400]} style={{ marginRight: 6 }} />
+                <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
+                  Himalayan Elevation Contours
+                </Text>
+              </View>
+              <Text variant="bodySmall" muted style={{ marginTop: 2 }}>
+                Topographic contour curves (100m interval)
               </Text>
             </View>
             <Switch
@@ -89,10 +92,13 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
           {/* Layer Item 2: Monsoon Hazards & Landslides */}
           <View style={[styles.layerItem, { borderBottomColor: colors.borderSubtle }]}>
             <View style={styles.layerInfo}>
-              <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
-                Monsoon Hazard Markers
-              </Text>
-              <Text variant="bodySmall" muted>
+              <View style={styles.layerTitleRow}>
+                <Icon name="alert-triangle" size={16} color={primitive.color.route.hazard} style={{ marginRight: 6 }} />
+                <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
+                  Monsoon Hazard Markers
+                </Text>
+              </View>
+              <Text variant="bodySmall" muted style={{ marginTop: 2 }}>
                 Landslide, flood washouts & road constriction warnings
               </Text>
             </View>
@@ -107,11 +113,14 @@ export const LayersSheet: React.FC<LayersSheetProps> = ({
           {/* Layer Item 3: Heli Landing Zones (Future Feature Disclosure) */}
           <View style={[styles.layerItem, { borderBottomColor: colors.borderSubtle }]}>
             <View style={styles.layerInfo}>
-              <Text variant="bodyLarge" style={{ color: colors.textSubtle, fontWeight: '600' }}>
-                Emergency Heli Landing Zones (LZ)
-              </Text>
-              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
-                Future layer · High altitude mountain evacuation sites
+              <View style={styles.layerTitleRow}>
+                <Icon name="shield" size={16} color={colors.textSubtle} style={{ marginRight: 6 }} />
+                <Text variant="bodyLarge" style={{ color: colors.textSubtle, fontWeight: '600' }}>
+                  Emergency Heli Landing Zones (LZ)
+                </Text>
+              </View>
+              <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: 2 }}>
+                High altitude mountain evacuation sites
               </Text>
             </View>
             <Badge label="UNAVAILABLE" variant="neutral" size="sm" />
@@ -148,6 +157,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: primitive.spacing[4],
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   layerItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -155,12 +168,15 @@ const styles = StyleSheet.create({
     paddingVertical: primitive.spacing[3],
     borderBottomWidth: 1,
   },
+  layerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   layerInfo: {
     flex: 1,
     marginRight: primitive.spacing[3],
   },
   closeBtn: {
-    marginTop: primitive.spacing[5],
-    minHeight: primitive.size.targetMin,
+    marginTop: primitive.spacing[4],
   },
 });

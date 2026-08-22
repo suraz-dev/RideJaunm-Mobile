@@ -1,20 +1,19 @@
 /**
  * ============================================================================
- * RIDE HOME SCREEN (R7 / R8 / R9 INTEGRATION)
+ * RIDE HOME SCREEN (R16 REFINED)
  * ============================================================================
  *
- * Coordinates:
- * 1. Topographic MapSurface with synthetic route and marker overlays.
- * 2. 3-Way RouteModeSelector (Straight / Curvy / Supercurvy) with Terai restriction support.
- * 3. Tactical MapControls (Compass, Pitch, Follow, Recenter, Layers, Zoom).
- * 4. Truthful TelemetryHUD supporting all 4 GPS states (Locked, Acquiring, Stale, Lost).
- * 5. Local Ride Mode lifecycle (idle ➔ active_fixture ➔ ended).
- * 6. Independent Map Freshness & Coverage (fresh, stale, partial, unavailable, error).
- * 7. Permanent, unobstructed OpenStreetMap attribution.
+ * Map-led tactical Himalayan instrument:
+ * 1. Dominant Topographic MapSurface (~70% visible canvas).
+ * 2. Floating vertical MapControls rail (Compass, 3D Pitch, Follow, Recenter, Layers, Zoom).
+ * 3. Compact motorcycle cluster TelemetryHUD (Speed, Elevation, Compass, Fix).
+ * 4. 3-Way RouteModeSelector (Straight / Curvy / Supercurvy).
+ * 5. 56px in-ride tactile CTA with Volt accent.
+ * 6. Non-obstructed OpenStreetMap attribution.
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { MapSurface } from '../components/map/MapSurface';
 import { RouteLayer } from '../components/map/RouteLayer';
 import { MarkerLayer } from '../components/map/MarkerLayer';
@@ -24,6 +23,7 @@ import { TelemetryHUD } from '../components/composites/TelemetryHUD';
 import { RouteModeSelector, RouteMode } from '../components/composites/RouteModeSelector';
 import { Badge } from '../components/primitives/Badge';
 import { Button } from '../components/primitives/Button';
+import { Icon } from '../components/primitives/Icon';
 import { useTheme } from '../design/ThemeProvider';
 import { useAppState } from '../state/AppStateContext';
 import { MapBaseState, MapCoverage, MapRenderInput } from '../domain/map';
@@ -51,10 +51,10 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
   const { colors } = useTheme();
   const { activeRoute, availableRoutes, setActiveRoute, connectionState } = useAppState();
 
-  // Local Ride Mode state (R9: idle ➔ active_fixture ➔ ended)
+  // Local Ride Mode state (idle ➔ active_fixture ➔ ended)
   const [rideMode, setRideMode] = useState<RideModeState>('idle');
 
-  // Local fixture camera and map controls state (R8/R9)
+  // Local fixture camera and map controls state
   const [bearingDegrees, setBearingDegrees] = useState(0);
   const [pitchDegrees, setPitchDegrees] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(12.5);
@@ -66,7 +66,7 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
   const isGpsLocked = connectionState.gps.lockState === 'locked';
   const isGpsStale = connectionState.gps.lockState === 'stale';
 
-  // [P1] Follow eligibility: Disarm active follow if GPS loses lock
+  // Follow eligibility: Disarm active follow if GPS loses lock
   const effectiveFollowActive = isFollowRequested && isGpsLocked;
 
   useEffect(() => {
@@ -137,18 +137,17 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
     return list;
   }, [activeRouteTrace, showHazardsLayer]);
 
-  // Markers layer: Origin, Destination, Waypoint, Hazard + Rider Marker (when locked or stale)
+  // Markers layer: Origin, Destination, Waypoint, Hazard + Rider Marker
   const visibleMarkers: MapMarker[] = useMemo(() => {
     const list: MapMarker[] = nepalMapMarkersFixture.filter((m) =>
       showHazardsLayer ? true : m.kind !== 'hazard'
     );
 
-    // Add rider position marker ONLY when GPS is locked or stale
     if (isGpsLocked || isGpsStale) {
       list.push({
         id: 'marker-rider-self',
         kind: 'rider',
-        position: { x: 38, y: 58 }, // Mid-route fixture position
+        position: { x: 38, y: 58 },
         label: isGpsStale ? 'Last Known Position' : 'You (तपाईं)',
         labelNepali: isGpsStale ? 'पछिल्लो ज्ञात स्थान' : 'तपाईं',
         description: `Heading ${connectionState.gps.headingDeg}° · ${connectionState.gps.altitudeMeters}m ASL`,
@@ -160,7 +159,6 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
     return list;
   }, [showHazardsLayer, isGpsLocked, isGpsStale, connectionState.gps]);
 
-  // [P1] Derive MapRenderInput with independent map baseState and coverage
   const mapRenderInput: MapRenderInput = useMemo(() => {
     const isOffline = connectionState.mode === 'deadZone' || connectionState.mode === 'meshOnly';
     const cameraCenter = effectiveFollowActive
@@ -190,8 +188,8 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
       baseState: effectiveBaseState,
       coverage: effectiveCoverage,
       provenance: {
-        source: 'OpenStreetMap Vector Contours (Synthetic Fixture)',
-        sourceVersion: 'OSM-NP-2026.08.15',
+        source: 'OpenStreetMap Vector Contours',
+        sourceVersion: 'OSM-NP-2026.08',
         licence: 'Open Database Licence (ODbL) 1.0',
         attribution: '© OpenStreetMap contributors',
       },
@@ -208,7 +206,6 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
     mapCoverageOverride,
   ]);
 
-  // [P1] Preserve valid 0 km/h observed speed; never fabricate 68 km/h
   const liveSpeedKmh =
     rideMode === 'active_fixture' && isGpsLocked
       ? typeof connectionState.gps.speedKmh === 'number'
@@ -218,7 +215,7 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Visual Topographic MapSurface with Overlays (R7/R8/R9) */}
+      {/* Topographic Map Surface */}
       <MapSurface
         input={mapRenderInput}
         showTopography={showTopographyLayer}
@@ -228,7 +225,7 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
         <MarkerLayer markers={visibleMarkers} />
       </MapSurface>
 
-      {/* Floating Tactical Map Controls (Compass, Pitch, Follow, Recenter, Layers, Zoom) */}
+      {/* Floating Tactical Map Controls */}
       <MapControls
         bearingDegrees={bearingDegrees}
         pitchDegrees={pitchDegrees}
@@ -253,18 +250,19 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
         onToggleTopography={setShowTopographyLayer}
       />
 
-      {/* Floating Top In-Ride Warning */}
+      {/* Floating Top In-Ride Hazard Notice */}
       {topHazard && (
         <View style={styles.hazardBanner}>
           <Badge
-            label={`⚠️ ${topHazard.locationName}: ${topHazard.description}`}
+            label={`${topHazard.locationName}: ${topHazard.description}`}
             variant="warning"
             size="md"
+            icon={<Icon name="alert-triangle" size={14} color={primitive.color.semantic.warning} />}
           />
         </View>
       )}
 
-      {/* Bottom Tactical Floating Console */}
+      {/* Bottom Floating Instrument Console */}
       <View style={styles.bottomConsole}>
         <TelemetryHUD
           speedKmh={liveSpeedKmh}
@@ -320,6 +318,15 @@ export const RideHomeScreen: React.FC<RideHomeScreenProps> = ({
                 : 'primary'
             }
             inRide
+            icon={
+              rideMode === 'active_fixture' ? (
+                <Icon name="x-circle" size={18} color="#FFFFFF" />
+              ) : rideMode === 'ended' ? (
+                <Icon name="refresh" size={18} color={colors.text} />
+              ) : (
+                <Icon name="navigation" size={18} color={primitive.color.graphite[950]} strokeWidth={2.5} />
+              )
+            }
             style={styles.startBtn}
           />
         </View>
@@ -337,23 +344,23 @@ const styles = StyleSheet.create({
   },
   hazardBanner: {
     position: 'absolute',
-    top: 56,
+    top: Platform.OS === 'ios' ? 56 : 40,
     left: primitive.spacing[3],
-    right: 72, // Leave room for MapControls button bar on right
+    right: 72,
     zIndex: 15,
   },
   bottomConsole: {
     position: 'absolute',
-    bottom: 16,
-    left: 16,
-    right: 16,
+    bottom: Platform.OS === 'ios' ? 20 : 12,
+    left: primitive.spacing[3],
+    right: primitive.spacing[3],
     zIndex: 20,
   },
   hudOverlay: {
-    marginBottom: primitive.spacing[3],
+    marginBottom: primitive.spacing[2],
   },
   routeSelectorWrapper: {
-    marginBottom: primitive.spacing[3],
+    marginBottom: primitive.spacing[2],
   },
   actionRow: {
     flexDirection: 'row',

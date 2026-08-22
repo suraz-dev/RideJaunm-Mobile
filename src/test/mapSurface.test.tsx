@@ -33,7 +33,7 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
       </ThemeProvider>
     );
 
-    expect(view.getByText('⚠️ STALE MAP CACHE')).toBeTruthy();
+    expect(view.getByText('STALE MAP CACHE')).toBeTruthy();
     expect(view.getByText(/OSM-NP-2026.05.10/)).toBeTruthy();
     expect(view.getByText(/Simulated stale map fixture/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
@@ -46,11 +46,11 @@ describe('RideJaunm R7 Visual MapSurface Composite Component', () => {
       </ThemeProvider>
     );
 
-    expect(view.getByText('⚠️ PARTIAL OFFLINE COVERAGE')).toBeTruthy();
+    expect(view.getByText('PARTIAL OFFLINE COVERAGE')).toBeTruthy();
     expect(
       view.getByText(/Thorong La Pass & High Camp \(Above 4,800m ASL\)/)
     ).toBeTruthy();
-    expect(view.getByText(/Synthetic base coverage rendered/)).toBeTruthy();
+    expect(view.getByText(/Base coverage rendered/)).toBeTruthy();
     expect(view.getByText(/© OpenStreetMap contributors · ODbL/)).toBeTruthy();
   });
 

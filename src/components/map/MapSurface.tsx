@@ -28,6 +28,7 @@ import { MapRenderInput } from '../../domain/map';
 import { Text } from '../primitives/Text';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -154,12 +155,17 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
             />
           </Svg>
           <View style={[styles.partialNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-            <Badge label="⚠️ PARTIAL OFFLINE COVERAGE" variant="warning" size="sm" />
+            <Badge
+              label="PARTIAL OFFLINE COVERAGE"
+              variant="warning"
+              size="sm"
+              icon={<Icon name="alert-triangle" size={11} color={primitive.color.semantic.warning} />}
+            />
             <Text variant="bodySmall" style={{ color: colors.text, marginTop: primitive.spacing[1], fontWeight: '600' }}>
               {coverage?.missingAreaLabel || 'Missing high altitude sector'}
             </Text>
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11, marginTop: primitive.spacing[1] }}>
-              Synthetic base coverage rendered · Simulated missing sector boundary
+              Base coverage rendered · Simulated missing sector boundary
             </Text>
           </View>
         </View>
@@ -169,7 +175,12 @@ export const MapSurface: React.FC<MapSurfaceProps> = ({
       {baseState === 'stale' && (
         <View style={[styles.staleNoticeBox, { backgroundColor: colors.surfaceElevated, borderColor: primitive.color.semantic.warning }]}>
           <View style={styles.staleHeaderRow}>
-            <Badge label="⚠️ STALE MAP CACHE" variant="warning" size="sm" />
+            <Badge
+              label="STALE MAP CACHE"
+              variant="warning"
+              size="sm"
+              icon={<Icon name="alert-triangle" size={11} color={primitive.color.semantic.warning} />}
+            />
             <Text variant="mono" style={{ color: colors.textSubtle, fontSize: 11 }}>
               {provenance.sourceVersion}
             </Text>

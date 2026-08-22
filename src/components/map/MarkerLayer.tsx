@@ -1,22 +1,21 @@
 /**
  * ============================================================================
- * TACTICAL MAP MARKERS OVERLAY (R8 / R9)
+ * FIXTURE MAP MARKER LAYER OVERLAY (R16 REFINED)
  * ============================================================================
  *
- * WHY THIS EXISTS:
- * Renders high-contrast tactical markers for Origin, Destination, Waypoints,
- * Hazards, and Rider Position on the synthetic map canvas.
- *
- * SAFETY INVARIANTS:
- * 1. Hazard markers strictly use warning amber / hazard tokens (#F2603C / #FFB020)
- *    and NEVER use SOS Red (#FF1F3D).
- * 2. Rider marker is rendered only when GPS is 'locked' or 'stale' (with disclosure).
+ * Renders tactical markers for:
+ * 1. Origin ('origin')
+ * 2. Destination ('destination')
+ * 3. Intermediate Waypoints ('waypoint')
+ * 4. Monsoon / Landslide Hazards ('hazard') - using vector icons
+ * 5. Current Rider Position ('rider') - with GPS stale halo & heading orientation
  */
 
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { MapMarker } from '../../domain/mapOverlay';
 import { Text } from '../primitives/Text';
+import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../design/ThemeProvider';
 import { primitive } from '../../design/tokens';
 
@@ -25,8 +24,11 @@ export interface MarkerLayerProps {
   onMarkerPress?: (marker: MapMarker) => void;
 }
 
-export const MarkerLayer: React.FC<MarkerLayerProps> = ({ markers, onMarkerPress }) => {
-  const { mode, colors } = useTheme();
+export const MarkerLayer: React.FC<MarkerLayerProps> = ({
+  markers,
+  onMarkerPress,
+}) => {
+  const { colors, mode } = useTheme();
   const isDayGlare = mode === 'dayGlare';
 
   const renderMarkerIcon = (marker: MapMarker) => {
@@ -86,11 +88,8 @@ export const MarkerLayer: React.FC<MarkerLayerProps> = ({ markers, onMarkerPress
       case 'hazard':
       default:
         return (
-          // Strictly warning/danger amber, never SOS red
           <View style={[styles.hazardPin, { backgroundColor: primitive.color.route.hazard, borderColor: colors.surface }]}>
-            <Text variant="mono" style={styles.hazardIconText}>
-              ⚠️
-            </Text>
+            <Icon name="alert-triangle" size={11} color="#FFFFFF" strokeWidth={2.5} />
           </View>
         );
     }
@@ -150,70 +149,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     transform: [{ translateX: -16 }, { translateY: -32 }],
-    zIndex: 15,
+    zIndex: 10,
   },
   markerPin: {
     width: 24,
     height: 24,
-    borderRadius: primitive.radius.full,
+    borderRadius: 12,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  waypointPin: {
-    width: 18,
-    height: 18,
-    borderRadius: primitive.radius.xs,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    transform: [{ rotate: '45deg' }],
-  },
-  waypointDot: {
-    width: 6,
-    height: 6,
-    borderRadius: primitive.radius.full,
-  },
-  riderContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  riderHalo: {
-    width: 28,
-    height: 28,
-    borderRadius: primitive.radius.full,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  riderDot: {
-    width: 12,
-    height: 12,
-    borderRadius: primitive.radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headingPointer: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 3,
-    borderRightWidth: 3,
-    borderBottomWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: primitive.color.graphite[950],
-    position: 'absolute',
-    top: -4,
-  },
-  hazardPin: {
-    width: 26,
-    height: 26,
-    borderRadius: primitive.radius.full,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    shadowColor: primitive.color.graphite[950],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 4,
   },
   originIconText: {
     color: primitive.color.graphite[950],
@@ -225,14 +174,81 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
   },
-  hazardIconText: {
-    fontSize: 13,
+  waypointPin: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  waypointDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  hazardPin: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: primitive.color.semantic.warning,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  riderContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  riderHalo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: primitive.color.volt[400],
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  riderDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headingPointer: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderBottomWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: primitive.color.graphite[950],
+    transform: [{ translateY: -4 }],
   },
   calloutLabel: {
     marginTop: 2,
     paddingHorizontal: primitive.spacing[2],
     paddingVertical: 1,
-    borderRadius: primitive.radius.xs,
-    borderWidth: 0.5,
+    borderRadius: primitive.radius.sm,
+    borderWidth: 1,
+    shadowColor: primitive.color.graphite[950],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });

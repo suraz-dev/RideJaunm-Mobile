@@ -1,5 +1,18 @@
+/**
+ * ============================================================================
+ * MAIN APPLICATION TAB NAVIGATOR (R16 REFINED)
+ * ============================================================================
+ *
+ * 5-tab core navigation:
+ * 1. Ride (Map-led tactical instrument)
+ * 2. Plan (Trip route & readiness planner)
+ * 3. SOS (Safety capability gate & console)
+ * 4. Squad (Rider community feed & live squad)
+ * 5. Profile (Rider profile, garage, & settings)
+ */
+
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { RideHomeScreen } from '../screens/RideHomeScreen';
 import { TripPlannerScreen } from '../screens/TripPlannerScreen';
@@ -7,6 +20,7 @@ import { SOSConsoleScreen } from '../screens/SOSConsoleScreen';
 import { SquadFeedScreen } from '../screens/SquadFeedScreen';
 import { ProfileGarageScreen } from '../screens/ProfileGarageScreen';
 import { Text } from '../components/primitives/Text';
+import { Icon } from '../components/primitives/Icon';
 import { useTheme } from '../design/ThemeProvider';
 import { primitive, safety } from '../design/tokens';
 import * as Haptics from 'expo-haptics';
@@ -31,12 +45,20 @@ export const TabNavigator: React.FC = () => {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: primitive.size.navBar + 20,
-          paddingBottom: 20,
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 84 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
           paddingTop: 8,
+          elevation: 8,
         },
         tabBarActiveTintColor: primitive.color.volt[400],
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: {
+          fontFamily: 'Inter_700Bold',
+          fontSize: 10,
+          letterSpacing: 0.5,
+          marginTop: 2,
+        },
       }}
     >
       <Tab.Screen
@@ -44,14 +66,17 @@ export const TabNavigator: React.FC = () => {
         component={RideHomeScreen}
         options={{
           tabBarLabel: ({ color }) => (
-            <Text variant="bodySmall" style={{ color, fontSize: 11, fontWeight: '700' }}>
+            <Text variant="bodySmall" style={[styles.tabLabel, { color }]}>
               Ride
             </Text>
           ),
-          tabBarIcon: ({ color }) => (
-            <Text variant="bodyMedium" style={{ color }}>
-              🏍️
-            </Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Icon
+              name="navigation"
+              size={22}
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -60,14 +85,17 @@ export const TabNavigator: React.FC = () => {
         component={TripPlannerScreen}
         options={{
           tabBarLabel: ({ color }) => (
-            <Text variant="bodySmall" style={{ color, fontSize: 11, fontWeight: '700' }}>
+            <Text variant="bodySmall" style={[styles.tabLabel, { color }]}>
               Plan
             </Text>
           ),
-          tabBarIcon: ({ color }) => (
-            <Text variant="bodyMedium" style={{ color }}>
-              🗺️
-            </Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Icon
+              name="route"
+              size={22}
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -78,16 +106,16 @@ export const TabNavigator: React.FC = () => {
           tabBarLabel: () => (
             <Text
               variant="bodySmall"
-              style={{ color: safety.sos.color, fontSize: 11, fontWeight: '900' }}
+              style={[styles.tabLabel, { color: safety.sos.color, fontWeight: '900' }]}
             >
               SOS
             </Text>
           ),
           tabBarIcon: () => (
-            <View style={styles.centerSosButton}>
-              <Text variant="bodySmall" style={{ color: '#FFFFFF', fontWeight: '900' }}>
-                SOS
-              </Text>
+            <View style={styles.centerSosContainer}>
+              <View style={styles.centerSosButton}>
+                <Icon name="shield-alert" size={20} color="#FFFFFF" strokeWidth={2.5} />
+              </View>
             </View>
           ),
         }}
@@ -102,14 +130,17 @@ export const TabNavigator: React.FC = () => {
         component={SquadFeedScreen}
         options={{
           tabBarLabel: ({ color }) => (
-            <Text variant="bodySmall" style={{ color, fontSize: 11, fontWeight: '700' }}>
+            <Text variant="bodySmall" style={[styles.tabLabel, { color }]}>
               Squad
             </Text>
           ),
-          tabBarIcon: ({ color }) => (
-            <Text variant="bodyMedium" style={{ color }}>
-              👥
-            </Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Icon
+              name="users"
+              size={22}
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -118,14 +149,17 @@ export const TabNavigator: React.FC = () => {
         component={ProfileGarageScreen}
         options={{
           tabBarLabel: ({ color }) => (
-            <Text variant="bodySmall" style={{ color, fontSize: 11, fontWeight: '700' }}>
-              Garage
+            <Text variant="bodySmall" style={[styles.tabLabel, { color }]}>
+              Profile
             </Text>
           ),
-          tabBarIcon: ({ color }) => (
-            <Text variant="bodyMedium" style={{ color }}>
-              ⚙️
-            </Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Icon
+              name="user"
+              size={22}
+              color={color}
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
         }}
       />
@@ -134,18 +168,29 @@ export const TabNavigator: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  centerSosContainer: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   centerSosButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: safety.sos.color,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: safety.sos.color,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
     elevation: 6,
-    marginBottom: 4,
   },
 });
