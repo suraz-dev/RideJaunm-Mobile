@@ -12,3 +12,4 @@ export * from './tripPlanner';
 export * from './tripReadiness';
 export * from './squadCommunity';
 export * from './profileSettings';
+export * from './sosConsole';
